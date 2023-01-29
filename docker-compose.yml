@@ -2,11 +2,9 @@ version: '3'
 
 services:
   surrealdb:
-    env_file:
-      - .env
-    entrypoint: 
-      - /surreal 
-      - start 
+    entrypoint:
+      - /surreal
+      - start
       - --user=root
       - --pass=root
     image: surrealdb/surrealdb:latest

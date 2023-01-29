@@ -1,60 +1,101 @@
-import { SurrealX } from './surrealx.ts';
+import yargs from 'https://cdn.deno.land/yargs/versions/yargs-v16.2.1-deno/raw/deno.ts';
+import { generate } from './generate/index.ts';
+import { addMigration } from './migrate/add.ts';
+import { runMigrations } from './migrate/run.ts';
+import { initDb } from './utils/initDb.ts';
 
-const db = new SurrealX('http://127.0.0.1:8000/rpc');
+type Arguments = {
+	url: string;
+	token?: string;
+	user: string;
+	pass: string;
+	ns: string;
+	db: string;
+};
 
-async function main() {
-	try {
-		console.log('Starting');
-		// Signin as a namespace, database, or root user
-		await db.signin({
-			user: 'root',
-			pass: 'root',
-		});
+type GenerateArguments = Arguments & {
+	output: string;
+};
 
-		// Select a specific namespace / database
-		await db.use('test', 'test');
-		const info = await db.query(`INFO FOR db;`);
-		console.log({ info: info[0].result });
+type MigrateAddArguments = Arguments & {
+	description: string;
+};
 
-		const tableInfo = await db.query(`INFO FOR TABLE person`);
-		console.log({ personTableInfo: tableInfo[0].result });
-
-		// Create a new person with a random id
-		const created = await db.createX('person', {
-			title: 'Founder & CEO',
-			name: {
-				first: 'Tobie',
-				last: 'Morgan Hitchcock',
-			},
-			marketing: true,
-			identifier: Math.random().toString(36).substr(2, 10),
-		});
-		console.log({ created });
-
-		// Update a person record with a specific id
-		const updated = await db.changeX('person:jaime', {
-			marketing: true,
-		});
-		console.log({ updated });
-
-		// Select all people records
-		const people = await db.selectAllX('person');
-		console.log({ people });
-		let p = await db.selectX('person:67k7ez84wey644cuimo7');
-		console.log({ p });
-
-		// Perform a custom advanced query
-		const groups = await db.query(
-			'SELECT marketing, count() FROM type::table($tb) GROUP BY marketing',
-			{
-				tb: 'person',
-			}
-		);
-		console.log({ groups });
-	} catch (e) {
-		console.error('ERROR', e);
-	}
-}
-
-await main();
-db.close();
+yargs(Deno.args)
+	.scriptName('surrealx')
+	.usage('$0 <cmd> [options]')
+	.command(
+		'migrate <subcommand>',
+		'Group of commands for creating and running migrations',
+		(yargs: any) => {
+			yargs
+				.command(
+					'run',
+					'Run all pending migrations',
+					{},
+					async (argv: Arguments) => {
+						const db = await initDb(argv);
+						await runMigrations(db);
+						db.close();
+					}
+				)
+				.command(
+					'add [description]',
+					'Create a new migration with the given description, and the current time as the version',
+					{},
+					(argv: MigrateAddArguments) => {
+						console.log({ argv });
+						addMigration(argv.description);
+					}
+				)
+				.help();
+		}
+	)
+	.command(
+		'generate',
+		'Generate a SurrealDB client from the database',
+		(yargs: any) => {
+			return yargs.positional('output', {
+				alias: 'o',
+				type: 'string',
+				description: 'The location of the outputted file, e.g. src/gen.ts',
+			});
+		},
+		async (argv: GenerateArguments) => {
+			console.log('Generating SurrealDB client');
+			const db = await initDb(argv);
+			await generate(db, argv.output);
+			db.close();
+		}
+	)
+	.option('url', {
+		type: 'string',
+		description: 'The url with which to connect with SurrealDB',
+		default: 'http://127.0.0.1:8000/rpc',
+	})
+	.option('token', {
+		type: 'string',
+		description: 'The token with which to connect with SurrealDB',
+		default: undefined,
+	})
+	.option('user', {
+		alias: 'u',
+		type: 'string',
+		default: 'root',
+	})
+	.option('pass', {
+		alias: ['password', 'p'],
+		type: 'string',
+		default: 'root',
+	})
+	.option('ns', {
+		alias: 'namespace',
+		type: 'string',
+		default: 'test',
+	})
+	.option('db', {
+		alias: 'database',
+		type: 'string',
+		default: 'test',
+	})
+	.help().argv;

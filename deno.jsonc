@@ -1,5 +1,10 @@
 {
-  "tasks": {
-    "dev": "deno run --watch main.ts"
-  }
+	"imports": {
+		"surrealdb": "https://deno.land/x/surrealdb@v0.5.0/mod.ts",
+		"ts-morph": "https://deno.land/x/ts_morph@17.0.1/mod.ts",
+		"lodash": "https://deno.land/x/lodash@4.17.0/mod.ts"
+	},
+	"tasks": {
+		"dev": "deno run --watch main.ts"
+	}
 }
