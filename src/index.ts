@@ -68,6 +68,26 @@ yargs(Deno.args)
 			db.close();
 		}
 	)
+	.command(
+		'database',
+		'Group of commands for interacting with the database',
+		(yargs: any) => {
+			yargs
+				.command('reset', 'reset the database', {}, async (argv: Arguments) => {
+					const db = await initDb(argv);
+					await db.query(`REMOVE DATABASE ${argv.db}`);
+					await db.query(`DEFINE DATABASE ${argv.db}`);
+					db.close();
+				})
+				.help();
+		},
+		async (argv: GenerateArguments) => {
+			console.log('Generating SurrealDB client');
+			const db = await initDb(argv);
+			await generate(db, argv.output);
+			db.close();
+		}
+	)
 	.option('url', {
 		type: 'string',
 		description: 'The url with which to connect with SurrealDB',

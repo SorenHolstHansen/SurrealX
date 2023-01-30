@@ -48,9 +48,3 @@ Also, this is my first time using Deno rather than Node, so I would greatly appr
 ## Docs
 
 - How to download
-
-## TODO
-
-- cases (i.e. snake_case, CamelCase, ...)
-- path.join()
-- Sample the database for when a table is schemaless

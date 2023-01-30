@@ -5,9 +5,9 @@ import { infoForDb, infoForTable } from '../utils/infoForDb.ts';
 import { capitalize } from '../utils/capitalize.ts';
 import {
 	createStringLiteralUnionTypeAlias,
+	createTableType,
 	createTableTypesInterface,
-} from './utils.ts';
-import { nameof } from 'https://deno.land/x/ts_morph@17.0.1/common/ts_morph_common.d.ts';
+} from './utils/index.ts';
 const { factory } = ts;
 
 export async function generate(db: Surreal, output: string) {
@@ -42,6 +42,11 @@ async function addTablesWithTypes(
 	}
 
 	const tableNames = Object.keys(dbInfo.tb);
+	if (tableNames.length === 0) {
+		throw new Error(
+			'Your database is empty. Perhaps you forgot to run migrations'
+		);
+	}
 
 	for (const [tableName, tableDefinition] of Object.entries(dbInfo.tb)) {
 		const isSchemafull = tableDefinition.includes('SCHEMAFULL');
@@ -65,17 +70,6 @@ async function addTablesWithTypes(
 	genFile.addStatements(printNode(createTableTypesInterface(tableNames)));
 }
 
-const surrealTypeNameToTsTypeIdentifier: Record<
-	string,
-	ts.KeywordTypeSyntaxKind
-> = {
-	string: ts.SyntaxKind.StringKeyword,
-	int: ts.SyntaxKind.NumberKeyword,
-	decimal: ts.SyntaxKind.NumberKeyword,
-	float: ts.SyntaxKind.NumberKeyword,
-	boolean: ts.SyntaxKind.BooleanKeyword,
-};
-
 async function createTableTypeAlias(
 	db: Surreal,
 	tableName: string
@@ -93,82 +87,5 @@ async function createTableTypeAlias(
 		factory.createIdentifier(capitalize(tableName)),
 		undefined,
 		createTableType(fieldInfo)
-	);
-}
-
-type FieldInfo = { name: string; definition: string };
-
-function createTableType(
-	fieldInfo: FieldInfo[],
-	/**
-	 * e.g. children of `name`, so fieldInfo would be fields like `name.first`, `name.last` and so on.
-	 * If undefined, this is the base layer
-	 */
-	parentField?: string
-): ts.TypeNode {
-	let baseFields: FieldInfo[] = fieldInfo;
-	if (parentField == null) {
-		// base layer
-		baseFields = fieldInfo.filter((f) => !f.name.includes('.'));
-	}
-
-	if (baseFields.length === 1 && baseFields[0].name.endsWith('.*')) {
-		// parent is an array
-		const { name, definition } = baseFields[0];
-		const type = definition.match(/TYPE (\w+)/)?.[1] ?? 'string';
-		if (type === 'object') {
-			return createTableType(
-				fieldInfo.filter((f) => f.name.startsWith(`${name}.`)),
-				name
-			);
-		} else if (type === 'array') {
-			return factory.createArrayTypeNode(
-				createTableType(
-					fieldInfo.filter((f) => f.name.startsWith(`${name}.`)),
-					name
-				)
-			);
-		} else {
-			return factory.createKeywordTypeNode(
-				surrealTypeNameToTsTypeIdentifier[type]
-			);
-		}
-	}
-
-	return factory.createTypeLiteralNode(
-		baseFields.map(({ name: _name, definition }) => {
-			const name = _name.split('.').at(-1)!;
-			const type = definition.match(/TYPE (\w+)/)?.[1] ?? 'string';
-			if (type === 'object') {
-				return factory.createPropertySignature(
-					undefined,
-					factory.createIdentifier(name),
-					undefined,
-					createTableType(
-						fieldInfo.filter((f) => f.name.startsWith(`${name}.`)),
-						name
-					)
-				);
-			} else if (type === 'array') {
-				return factory.createPropertySignature(
-					undefined,
-					factory.createIdentifier(name),
-					undefined,
-					factory.createArrayTypeNode(
-						createTableType(
-							fieldInfo.filter((f) => f.name.startsWith(`${name}.`)),
-							name
-						)
-					)
-				);
-			} else {
-				return factory.createPropertySignature(
-					undefined,
-					factory.createIdentifier(name),
-					undefined,
-					factory.createKeywordTypeNode(surrealTypeNameToTsTypeIdentifier[type])
-				);
-			}
-		})
 	);
 }

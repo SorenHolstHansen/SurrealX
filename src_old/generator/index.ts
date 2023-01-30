@@ -1,3 +1,0 @@
-function generate(): string {
-	return '';
-}

@@ -1,25 +1,7 @@
-import { ts } from 'ts-morph';
-import { capitalize } from '../utils/capitalize.ts';
+import { ts, printNode } from 'ts-morph';
+import { capitalize } from '../../utils/capitalize.ts';
+import { assertEquals } from 'https://deno.land/std@0.174.0/testing/asserts.ts';
 const { factory } = ts;
-
-export function createStringLiteralUnionTypeAlias(
-	typeName: string,
-	types: string[],
-	shouldExport = false
-): ts.Node {
-	return factory.createTypeAliasDeclaration(
-		shouldExport
-			? [factory.createToken(ts.SyntaxKind.ExportKeyword)]
-			: undefined,
-		factory.createIdentifier(typeName),
-		undefined,
-		factory.createUnionTypeNode(
-			types.map((t) =>
-				factory.createLiteralTypeNode(factory.createStringLiteral(t))
-			)
-		)
-	);
-}
 
 export function createTableTypesInterface(tableNames: string[]): ts.Node {
 	return factory.createInterfaceDeclaration(
@@ -59,3 +41,15 @@ export function createTableTypesInterface(tableNames: string[]): ts.Node {
 		)
 	);
 }
+
+Deno.test('createTableType', () => {
+	const type = createTableTypesInterface(['tableA', 'myTable']);
+	const node = printNode(type);
+	assertEquals(
+		node,
+		`export interface TableTypes extends Record<TableName, Record<string, unknown>> {
+    tableA: TableA;
+    myTable: MyTable;
+}`
+	);
+});
