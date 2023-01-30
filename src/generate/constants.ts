@@ -112,9 +112,7 @@ type PatchX<T extends Record<string, unknown>> =
 
 type WithId<T> = T & { id: string };
 
-type DeepPartial<T> = T extends object ? {
-    [P in keyof T]?: DeepPartial<T[P]>;
-} : T;
+type DeepPartial<T> = T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
 `;
 
 export const SurrealXClassStatements = `

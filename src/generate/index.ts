@@ -1,14 +1,17 @@
-import { Project, ts, createWrappedNode, printNode } from 'ts-morph';
+import { Project, ts, printNode, SourceFile } from 'ts-morph';
 import Surreal from 'surrealdb';
 import { SurrealXClassStatements, typeUtilsStatements } from './constants.ts';
-import { infoForDb } from '../utils/infoForDb.ts';
+import { infoForDb, infoForTable } from '../utils/infoForDb.ts';
 import { capitalize } from '../utils/capitalize.ts';
+import {
+	createStringLiteralUnionTypeAlias,
+	createTableTypesInterface,
+} from './utils.ts';
+import { nameof } from 'https://deno.land/x/ts_morph@17.0.1/common/ts_morph_common.d.ts';
 const { factory } = ts;
 
 export async function generate(db: Surreal, output: string) {
 	const project = new Project();
-
-	const tablesWithTypesPromise = getTablesWithTypes(db);
 
 	const genFile = project.createSourceFile(
 		output,
@@ -19,54 +22,7 @@ export async function generate(db: Surreal, output: string) {
 	genFile.addStatements(typeUtilsStatements);
 
 	// Add the types for all the tables
-	const tablesWithTypes = await tablesWithTypesPromise;
-	genFile.addStatements(
-		tablesWithTypes
-			.map(
-				({ stringifiedType, capitalizedTableName }) =>
-					`export type ${capitalizedTableName} = ${stringifiedType};`
-			)
-			.join('\n')
-	);
-	genFile.addStatements(
-		`export type TableName = ${tablesWithTypes
-			.map(({ tableName }) => `"${tableName}"`)
-			.join(' | ')};`
-	);
-	genFile.addStatements(
-		`export interface TableTypes extends Record<TableName, Record<string, unknown>> {
-    ${tablesWithTypes
-			.map(
-				({ tableName, capitalizedTableName }) =>
-					`${tableName}: ${capitalizedTableName};`
-			)
-			.join('\n\t')}
-}`
-	);
-
-	const type = factory.createTypeAliasDeclaration(
-		[factory.createToken(ts.SyntaxKind.ExportKeyword)],
-		factory.createIdentifier('MyType'),
-		undefined,
-		factory.createTypeLiteralNode([
-			factory.createPropertySignature(
-				undefined,
-				factory.createIdentifier('name'),
-				undefined,
-				factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)
-			),
-		])
-	);
-	const classDec = createWrappedNode(type);
-
-	const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
-
-	const result = printer.printNode(
-		ts.EmitHint.Unspecified,
-		type,
-		genFile.compilerNode
-	);
-	console.log({ result });
+	await addTablesWithTypes(db, genFile);
 
 	genFile.addStatements(SurrealXClassStatements);
 
@@ -75,40 +31,144 @@ export async function generate(db: Surreal, output: string) {
 	await project.save();
 }
 
-type TableMeta = {
-	tableName: string;
-	capitalizedTableName: string;
-	stringifiedType: string;
-};
-
-async function getTablesWithTypes(db: Surreal): Promise<TableMeta[]> {
+async function addTablesWithTypes(
+	db: Surreal,
+	genFile: SourceFile
+): Promise<void> {
 	const dbInfo = await infoForDb(db);
 
 	if (dbInfo == null) {
 		throw new Error('Error');
 	}
 
-	const tableMeta: TableMeta[] = [];
+	const tableNames = Object.keys(dbInfo.tb);
 
 	for (const [tableName, tableDefinition] of Object.entries(dbInfo.tb)) {
 		const isSchemafull = tableDefinition.includes('SCHEMAFULL');
 		if (!isSchemafull) {
 			// sample the database for the type if the user wants
-			tableMeta.push({
-				tableName,
-				capitalizedTableName: capitalize(tableName),
-				stringifiedType: 'Record<string, unknown>',
-			});
+			genFile.addStatements(
+				`export type ${capitalize(tableName)} = Record<string, unknown>;`
+			);
 			continue;
 		} else {
-			const stringifiedType = `{}`;
-			tableMeta.push({
-				tableName,
-				capitalizedTableName: capitalize(tableName),
-				stringifiedType,
-			});
+			genFile.addStatements(
+				printNode(await createTableTypeAlias(db, tableName))
+			);
 		}
 	}
 
-	return tableMeta;
+	genFile.addStatements(
+		printNode(createStringLiteralUnionTypeAlias('TableName', tableNames, true))
+	);
+
+	genFile.addStatements(printNode(createTableTypesInterface(tableNames)));
+}
+
+const surrealTypeNameToTsTypeIdentifier: Record<
+	string,
+	ts.KeywordTypeSyntaxKind
+> = {
+	string: ts.SyntaxKind.StringKeyword,
+	int: ts.SyntaxKind.NumberKeyword,
+	decimal: ts.SyntaxKind.NumberKeyword,
+	float: ts.SyntaxKind.NumberKeyword,
+	boolean: ts.SyntaxKind.BooleanKeyword,
+};
+
+async function createTableTypeAlias(
+	db: Surreal,
+	tableName: string
+): Promise<ts.Node> {
+	const tableInfo = await infoForTable(db, tableName);
+	if (tableInfo == null) throw new Error('ERROR!');
+
+	const fieldInfo = Object.entries(tableInfo.fd).map(([name, definition]) => ({
+		name,
+		definition,
+	}));
+
+	return factory.createTypeAliasDeclaration(
+		[factory.createToken(ts.SyntaxKind.ExportKeyword)],
+		factory.createIdentifier(capitalize(tableName)),
+		undefined,
+		createTableType(fieldInfo)
+	);
+}
+
+type FieldInfo = { name: string; definition: string };
+
+function createTableType(
+	fieldInfo: FieldInfo[],
+	/**
+	 * e.g. children of `name`, so fieldInfo would be fields like `name.first`, `name.last` and so on.
+	 * If undefined, this is the base layer
+	 */
+	parentField?: string
+): ts.TypeNode {
+	let baseFields: FieldInfo[] = fieldInfo;
+	if (parentField == null) {
+		// base layer
+		baseFields = fieldInfo.filter((f) => !f.name.includes('.'));
+	}
+
+	if (baseFields.length === 1 && baseFields[0].name.endsWith('.*')) {
+		// parent is an array
+		const { name, definition } = baseFields[0];
+		const type = definition.match(/TYPE (\w+)/)?.[1] ?? 'string';
+		if (type === 'object') {
+			return createTableType(
+				fieldInfo.filter((f) => f.name.startsWith(`${name}.`)),
+				name
+			);
+		} else if (type === 'array') {
+			return factory.createArrayTypeNode(
+				createTableType(
+					fieldInfo.filter((f) => f.name.startsWith(`${name}.`)),
+					name
+				)
+			);
+		} else {
+			return factory.createKeywordTypeNode(
+				surrealTypeNameToTsTypeIdentifier[type]
+			);
+		}
+	}
+
+	return factory.createTypeLiteralNode(
+		baseFields.map(({ name: _name, definition }) => {
+			const name = _name.split('.').at(-1)!;
+			const type = definition.match(/TYPE (\w+)/)?.[1] ?? 'string';
+			if (type === 'object') {
+				return factory.createPropertySignature(
+					undefined,
+					factory.createIdentifier(name),
+					undefined,
+					createTableType(
+						fieldInfo.filter((f) => f.name.startsWith(`${name}.`)),
+						name
+					)
+				);
+			} else if (type === 'array') {
+				return factory.createPropertySignature(
+					undefined,
+					factory.createIdentifier(name),
+					undefined,
+					factory.createArrayTypeNode(
+						createTableType(
+							fieldInfo.filter((f) => f.name.startsWith(`${name}.`)),
+							name
+						)
+					)
+				);
+			} else {
+				return factory.createPropertySignature(
+					undefined,
+					factory.createIdentifier(name),
+					undefined,
+					factory.createKeywordTypeNode(surrealTypeNameToTsTypeIdentifier[type])
+				);
+			}
+		})
+	);
 }

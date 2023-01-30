@@ -113,10 +113,13 @@ type PatchX<T extends Record<string, unknown>> =
 
 type WithId<T> = T & { id: string };
 
-type DeepPartial<T> = T extends object ? {
-    [P in keyof T]?: DeepPartial<T[P]>;
-} : T;
-export type MyTable = {};
+type DeepPartial<T> = T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
+export type MyTable = {
+    name: {
+        first: string;
+        last: string;
+    };
+};
 export type Tis = Record<string, unknown>;
 export type TableName = "myTable" | "tis";
 export interface TableTypes extends Record<TableName, Record<string, unknown>> {
