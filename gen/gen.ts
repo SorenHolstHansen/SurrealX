@@ -114,18 +114,75 @@ type PatchX<T extends Record<string, unknown>> =
 type WithId<T> = T & { id: string };
 
 type DeepPartial<T> = T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
+/**
+ * Definition:
+ * ```sql
+ * DEFINE TABLE post SCHEMALESS
+ * ```
+ */
 export type Post = Record<string, unknown>;
+/**
+ * Definition:
+ * ```sql
+ * DEFINE TABLE user SCHEMAFULL
+ * ```
+*/
 export type User = {
-    age: number;
-    comments: {
-        id: string;
-        title: string;
+    /**
+     * Definition:
+     * ```sql
+     * DEFINE FIELD age ON user TYPE int
+     * ```
+    */
+    age?: number;
+    /**
+     * Definition:
+     * ```sql
+     * DEFINE FIELD comments ON user TYPE array
+     * ```
+    */
+    comments?: {
+        /**
+         * Definition:
+         * ```sql
+         * DEFINE FIELD comments[*].id ON user TYPE string ASSERT $value = /^comment:.[REPLACED]
+         * ```
+        */
+        id?: string;
+        /**
+         * Definition:
+         * ```sql
+         * DEFINE FIELD comments[*].title ON user TYPE string
+         * ```
+        */
+        title?: string;
     }[];
-    name: {
+    /**
+     * Definition:
+     * ```sql
+     * DEFINE FIELD name ON user TYPE object
+     * ```
+    */
+    name?: {
+        /**
+         * Definition:
+         * ```sql
+         * DEFINE FIELD name.first ON user TYPE string ASSERT $value != NONE
+         * ```
+        */
         first: string;
-        last: string;
+        /**
+         * Definition:
+         * ```sql
+         * DEFINE FIELD name.last ON user TYPE string
+         * ```
+        */
+        last?: string;
     };
 };
+/**
+ * Names of tables in the database
+*/
 export type TableName = "post" | "user";
 export interface TableTypes extends Record<TableName, Record<string, unknown>> {
     post: Post;

@@ -1,5 +1,6 @@
 import { printNode, ts } from 'ts-morph';
 import { assertEquals } from 'https://deno.land/std@0.174.0/testing/asserts.ts';
+import { addComment } from './addComment.ts';
 const { factory } = ts;
 
 const surrealTypeNameToTsTypeIdentifier: Record<
@@ -70,7 +71,7 @@ export function createTableType(
 				? factory.createToken(ts.SyntaxKind.QuestionToken)
 				: undefined;
 			if (type === 'object') {
-				return factory.createPropertySignature(
+				return addComment(factory.createPropertySignature(
 					undefined,
 					factory.createIdentifier(name),
 					questionMark,
@@ -78,9 +79,16 @@ export function createTableType(
 						fieldInfo.filter((f) => f.name.startsWith(`${_name}.`)),
 						_name
 					)
+				),
+					[
+						'Definition:',
+						'```sql',
+						definition.replace('*/', '[REPLACED]'),
+						'```',
+					]
 				);
 			} else if (type === 'array') {
-				return factory.createPropertySignature(
+				return addComment(factory.createPropertySignature(
 					undefined,
 					factory.createIdentifier(name),
 					questionMark,
@@ -90,13 +98,30 @@ export function createTableType(
 							_name
 						)
 					)
+				),
+					[
+						'Definition:',
+						'```sql',
+						definition.replace('*/', '[REPLACED]'),
+						'```',
+					]
 				);
 			} else {
-				return factory.createPropertySignature(
-					undefined,
-					factory.createIdentifier(name),
-					questionMark,
-					factory.createKeywordTypeNode(surrealTypeNameToTsTypeIdentifier[type])
+				return addComment(
+					factory.createPropertySignature(
+						undefined,
+						factory.createIdentifier(name),
+						questionMark,
+						factory.createKeywordTypeNode(
+							surrealTypeNameToTsTypeIdentifier[type]
+						)
+					),
+					[
+						'Definition:',
+						'```sql',
+						definition.replace('*/', '[REPLACED]'),
+						'```',
+					]
 				);
 			}
 		})

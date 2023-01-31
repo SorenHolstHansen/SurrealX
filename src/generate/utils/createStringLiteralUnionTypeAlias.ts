@@ -1,5 +1,6 @@
 import { ts, printNode } from 'ts-morph';
 import { assertEquals } from 'https://deno.land/std@0.174.0/testing/asserts.ts';
+import { addComment } from './addComment.ts';
 const { factory } = ts;
 
 export function createStringLiteralUnionTypeAlias(
@@ -7,17 +8,20 @@ export function createStringLiteralUnionTypeAlias(
 	types: string[],
 	shouldExport = false
 ): ts.Node {
-	return factory.createTypeAliasDeclaration(
-		shouldExport
-			? [factory.createToken(ts.SyntaxKind.ExportKeyword)]
-			: undefined,
-		factory.createIdentifier(typeName),
-		undefined,
-		factory.createUnionTypeNode(
-			types.map((t) =>
-				factory.createLiteralTypeNode(factory.createStringLiteral(t))
+	return addComment(
+		factory.createTypeAliasDeclaration(
+			shouldExport
+				? [factory.createToken(ts.SyntaxKind.ExportKeyword)]
+				: undefined,
+			factory.createIdentifier(typeName),
+			undefined,
+			factory.createUnionTypeNode(
+				types.map((t) =>
+					factory.createLiteralTypeNode(factory.createStringLiteral(t))
+				)
 			)
-		)
+		),
+		'Names of tables in the database'
 	);
 }
 

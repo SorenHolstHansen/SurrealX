@@ -8,6 +8,7 @@ import {
 	createTableType,
 	createTableTypesInterface,
 } from './utils/index.ts';
+import { addComment } from './utils/addComment.ts';
 const { factory } = ts;
 
 export async function generate(db: Surreal, output: string) {
@@ -52,13 +53,26 @@ async function addTablesWithTypes(
 		const isSchemafull = tableDefinition.includes('SCHEMAFULL');
 		if (!isSchemafull) {
 			// sample the database for the type if the user wants
-			genFile.addStatements(
-				`export type ${capitalize(tableName)} = Record<string, unknown>;`
-			);
+			genFile.addStatements([
+				`/**
+ * Definition:
+ * \`\`\`sql
+ * ${tableDefinition}
+ * \`\`\`
+ */`,
+				`export type ${capitalize(tableName)} = Record<string, unknown>;`,
+			]);
 			continue;
 		} else {
 			genFile.addStatements(
-				printNode(await createTableTypeAlias(db, tableName))
+				printNode(
+					addComment(await createTableTypeAlias(db, tableName), [
+						'Definition:',
+						'```sql',
+						tableDefinition,
+						'```',
+					])
+				)
 			);
 		}
 	}

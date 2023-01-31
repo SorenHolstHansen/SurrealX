@@ -48,3 +48,8 @@ Also, this is my first time using Deno rather than Node, so I would greatly appr
 ## Docs
 
 - How to download
+
+## FAQ
+
+- Q: What does the `[REPLACED]` thing mean in the comments.
+- A: Sometimes you might have defined a file like this `DEFINE FIELD comment ON TABLE post TYPE string ASSERT $value = /^comment:.*/;`, or similar. The issue is that this includes the string `*/` which is the same as the closing tag of the ts doc comment. There are currently [no workaround for this](https://github.com/microsoft/tsdoc/issues/166), so hence the `[REPLACED]`.
