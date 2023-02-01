@@ -16,7 +16,8 @@ export async function generate(db: Surreal, output: string) {
 
 	const genFile = project.createSourceFile(
 		output,
-		`import Surreal from 'surrealdb';`,
+		`import Surreal from 'surrealdb';
+import { DeepPick, DeepPickPath, DefaultGrammar } from 'npm:ts-deep-pick';`,
 		{ overwrite: true }
 	);
 

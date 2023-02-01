@@ -45,9 +45,9 @@ type Prev = [
 	...0[]
 ];
 
-type Join<K, P> = K extends string | number
+type Join<K, P, Sep  extends string = "/"> = K extends string | number
 	? P extends string | number
-		? \`\${K}\${'' extends P ? '' : '/'}\${P}\`
+		? \`\${K}\${'' extends P ? '' : Sep}\${P}\`
 		: never
 	: never;
 
@@ -59,12 +59,12 @@ type Join<K, P> = K extends string | number
  * type P = Paths<{id: string, name: {first: string}}> // "/id" | "/name" | "/name/first"
  * \`\`\`
  */
-type Paths<T, D extends number = 10> = [D] extends [never]
+type Paths<T, Sep  extends string = "/", D extends number = 10> = [D] extends [never]
 	? never
 	: T extends object
 	? {
 			[K in keyof T]-?: K extends string | number
-				? \`\${K}\` | Join<K, Paths<T[K], Prev[D]>>
+				? \`\${K}\` | Join<K, Paths<T[K], Sep, Prev[D]>, Sep>
 				: never;
 	  }[keyof T]
 	: '';
@@ -126,10 +126,17 @@ export const SurrealXClassStatements = `
 	 *
 	 * @param thing The table name to select.
 	 */
-	async selectAllX<T extends TableName>(
-		thing: T
-	): Promise<WithId<TableTypes[T]>[]> {
-		return await super.select(thing);
+	async selectAllX<
+		T extends TableName,
+		Fields extends Paths<WithId<TableTypes[T]>, '.'> &
+			DeepPickPath<WithId<TableTypes[T]>, DefaultGrammar>
+	>(
+		thing: T,
+		fields?: Fields[]
+	): Promise<DeepPick<WithId<TableTypes[T]>, Fields>[]> {
+		const f = (fields ?? ['*']).join(', ');
+		const result = await super.query(\`SELECT \${f} FROM type::table($tb);\`, { tb: thing });
+		return result[0].result as any;
 	}
 
 	/**
@@ -137,11 +144,17 @@ export const SurrealXClassStatements = `
 	 *
 	 * @param thing The record ID to select.
 	 */
-	async selectX<T extends TableName>(
-		thing: \`\${T}:\${string}\`
-	): Promise<WithId<TableTypes[T]>> {
-		const result = await super.select(thing);
-		return result[0] as any;
+	async selectX<
+		T extends TableName,
+		Fields extends Paths<WithId<TableTypes[T]>, '.'> &
+			DeepPickPath<WithId<TableTypes[T]>, DefaultGrammar>
+	>(
+		thing: \`\${T}:\${string}\`,
+		fields?: Fields[]
+	): Promise<DeepPick<WithId<TableTypes[T]>, Fields> | undefined> {
+		const f = (fields ?? ['*']).join(', ');
+		const result = await super.query(\`SELECT \${f} FROM type::table($tb);\`, { tb: thing });
+		return (result[0].result as any[])[0] as any;
 	}
 
 	/**

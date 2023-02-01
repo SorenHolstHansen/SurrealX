@@ -88,9 +88,20 @@
   },
   "npm": {
     "specifiers": {
+      "ts-deep-pick": "ts-deep-pick@0.2.2",
       "typescript": "typescript@4.9.4"
     },
     "packages": {
+      "ts-deep-pick@0.2.2": {
+        "integrity": "sha512-DFR0THXKY8Hil84r4vx5Ofb7zVryHCBfv/vYcgbDyymmivdB1vUcBwbYsDzP3j9pwnQqVFNZZplYu628STrXAA==",
+        "dependencies": {
+          "ts-typetools": "ts-typetools@0.6.2"
+        }
+      },
+      "ts-typetools@0.6.2": {
+        "integrity": "sha512-Ke2q5ejYamdlJxs5lvcl7uet+2Bm22MXlTTT9vjopVaDlx/rHMek60qap1tTzPlYoab+aeaIL8fHS7XakJQx7A==",
+        "dependencies": {}
+      },
       "typescript@4.9.4": {
         "integrity": "sha512-Uz+dTXYzxXXbsFpM86Wh3dKCxrQqUcVMxwU54orwlJjOpO3ao8L7j5lH+dWfTwgCwIuM9GQ2kvVotzYJMXTBZg==",
         "dependencies": {}
