@@ -1,4 +1,4 @@
 {
-	"deno.enable": true,
-	"deno.importMap": "./deno.jsonc"
+  "deno.enable": true,
+  "deno.importMap": "./deno.jsonc"
 }

@@ -2,19 +2,26 @@
 
 A strongly typed SurrealDB client.
 
-SurrealX is a CLI that generates a strongly typed client for SurrealDB queries from your running Surreal database. SurrealX extends the basic Surreal instance from the surrealdb package with `X` variants (e.g. `select` becomes `selectX`) that is aware of your active tables in your database.
+SurrealX is a CLI that generates a strongly typed client for SurrealDB queries
+from your running Surreal database. SurrealX extends the basic Surreal instance
+from the surrealdb package with `X` variants (e.g. `select` becomes `selectX`)
+that is aware of your active tables in your database.
 
-Furthermore it provides a very basic migration setup. The SurrealDB team is working on a built-in migration tool, so our migration tool is only prelimenary.
+Furthermore it provides a very basic migration setup. The SurrealDB team is
+working on a built-in migration tool, so our migration tool is only prelimenary.
 
 ## DISCLAIMER!
 
-This package is still a work in progress, but as you can escape to the Surreal package, you can expect it to be at least as production ready as that package.
+This package is still a work in progress, but as you can escape to the Surreal
+package, you can expect it to be at least as production ready as that package.
 
-However the migration tool is very far from production readiness. You should probably use something else in a produciton environment, at least for now.
+However the migration tool is very far from production readiness. You should
+probably use something else in a produciton environment, at least for now.
 
 ## Example
 
-Say you have made the following queries to your Surreal database (possible created with our migration tool)
+Say you have made the following queries to your Surreal database (possible
+created with our migration tool)
 
 ```sql
 -- Schemaless table
@@ -32,10 +39,11 @@ DEFINE FIELD comments.*.id ON TABLE user TYPE string ASSERT $value = /^comment:.
 DEFINE FIELD comments.*.title ON TABLE user TYPE string;
 ```
 
-And then generate the client lib with `surrealx generate --output src/gen.ts`. Then you will have a fully typechecked client lib that can do the following
+And then generate the client lib with `surrealx generate --output src/gen.ts`.
+Then you will have a fully typechecked client lib that can do the following
 
 ```typescript
-import { Post, User, SurrealX } from './gen.ts';
+import { Post, SurrealX, User } from "./gen.ts";
 
 /**
  * type Post = Record<string, unknown>;
@@ -54,16 +62,16 @@ import { Post, User, SurrealX } from './gen.ts';
  */
 
 // SETUP
-const db = new SurrealX('http://127.0.0.1:8000/rpc');
-await db.signin({ user: 'root', pass: 'root' });
-await db.use('test', 'test');
+const db = new SurrealX("http://127.0.0.1:8000/rpc");
+await db.signin({ user: "root", pass: "root" });
+await db.use("test", "test");
 
-await db.selectAllX('user'); // type: User[]
-await db.selectAllX('user:123'); // typeError
-await db.selectX('user:123'); // type: User | undefined
-await db.selectAllX('user:123', ['name.first', 'age', 'id']); // type: { age?: number, name?: { first: string } } | undefined
-await db.selectX('user'); // typeError
-await db.selectX('post:123'); // type: Record<string, unknown>
+await db.selectAllX("user"); // type: User[]
+await db.selectAllX("user:123"); // typeError
+await db.selectX("user:123"); // type: User | undefined
+await db.selectAllX("user:123", ["name.first", "age", "id"]); // type: { age?: number, name?: { first: string } } | undefined
+await db.selectX("user"); // typeError
+await db.selectX("post:123"); // type: Record<string, unknown>
 
 // similar for createX, changeX, modifyX, modifyAllX, deleteX, updateX
 
@@ -77,4 +85,9 @@ await db.selectX('post:123'); // type: Record<string, unknown>
 ## FAQ
 
 - Q: What does the `[REPLACED]` thing mean in the comments.
-- A: Sometimes you might have defined a file like this `DEFINE FIELD comment ON TABLE post TYPE string ASSERT $value = /^comment:.*/;`, or similar. The issue is that this includes the string `*/` which is the same as the closing tag of the ts doc comment. There are currently [no workaround for this](https://github.com/microsoft/tsdoc/issues/166), so hence the `[REPLACED]`.
+- A: Sometimes you might have defined a file like this
+  `DEFINE FIELD comment ON TABLE post TYPE string ASSERT $value = /^comment:.*/;`,
+  or similar. The issue is that this includes the string `*/` which is the same
+  as the closing tag of the ts doc comment. There are currently
+  [no workaround for this](https://github.com/microsoft/tsdoc/issues/166), so
+  hence the `[REPLACED]`.
