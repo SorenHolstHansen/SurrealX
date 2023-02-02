@@ -2,13 +2,19 @@
 
 A strongly typed SurrealDB client.
 
-SurrealX is a CLI that generates a strongly typed client for SurrealDB queries from your running Surreal darabase. SurrealX extends the basic Surreal instance from the surrealdb package with `X` variants (e.g. `select` becomes `selectX`) that is aware of your active tables in your database.
+SurrealX is a CLI that generates a strongly typed client for SurrealDB queries from your running Surreal database. SurrealX extends the basic Surreal instance from the surrealdb package with `X` variants (e.g. `select` becomes `selectX`) that is aware of your active tables in your database.
 
 Furthermore it provides a very basic migration setup. The SurrealDB team is working on a built-in migration tool, so our migration tool is only prelimenary.
 
+## DISCLAIMER!
+
+This package is still a work in progress, but as you can escape to the Surreal package, you can expect it to be at least as production ready as that package.
+
+However the migration tool is very far from production readiness. You should probably use something else in a produciton environment, at least for now.
+
 ## Example
 
-Say you have the following migration file `migrations/1674939239403_initial.sql`, created with `surrealx migrate add initial`
+Say you have made the following queries to your Surreal database (possible created with our migration tool)
 
 ```sql
 -- Schemaless table
@@ -16,34 +22,53 @@ CREATE post SET title = "My first post";
 
 -- Schemafull table
 DEFINE TABLE user SCHEMAFULL;
-DEFINE FIELD name ON TABLE user TYPE string;
 DEFINE FIELD age ON TABLE user TYPE int;
+DEFINE FIELD name ON TABLE user TYPE object;
+DEFINE FIELD name.first ON TABLE user TYPE string ASSERT $value != NONE;
+DEFINE FIELD name.last ON TABLE user TYPE string;
+DEFINE FIELD comments ON TABLE user TYPE array;
+DEFINE FIELD comments.* ON TABLE user TYPE object ASSERT $value != NONE;
+DEFINE FIELD comments.*.id ON TABLE user TYPE string ASSERT $value = /^comment:.*/;
+DEFINE FIELD comments.*.title ON TABLE user TYPE string;
 ```
 
-And run the migration with `surrealx migrate run`, and afterwards generate the client lib with `surrealx generate --output src/gen.ts`. Then you will have a fully typechecked client lib that can do the following
+And then generate the client lib with `surrealx generate --output src/gen.ts`. Then you will have a fully typechecked client lib that can do the following
 
 ```typescript
+import { Post, User, SurrealX } from './gen.ts';
+
+/**
+ * type Post = Record<string, unknown>;
+ *
+ * type User = {
+ *  age?: number;
+ *  comments?: {
+ *      id?: string;
+ *      title?: string;
+ *  }[];
+ *  name?: {
+ *      first: string;
+ *      last?: string;
+ *  };
+ * };
+ */
+
 // SETUP
 const db = new SurrealX('http://127.0.0.1:8000/rpc');
 await db.signin({ user: 'root', pass: 'root' });
 await db.use('test', 'test');
 
-await db.selectAllX('user'); // type: {name: string, age: number}[]
+await db.selectAllX('user'); // type: User[]
 await db.selectAllX('user:123'); // typeError
-await db.selectX('user:123'); // type: {name: string, age: number}
+await db.selectX('user:123'); // type: User | undefined
+await db.selectAllX('user:123', ['name.first', 'age', 'id']); // type: { age?: number, name?: { first: string } } | undefined
 await db.selectX('user'); // typeError
 await db.selectX('post:123'); // type: Record<string, unknown>
 
-// createX, changeX, modifyX, modifyAllX, deleteX, updateX
+// similar for createX, changeX, modifyX, modifyAllX, deleteX, updateX
 
 // You can always remove the `X` from the end of the method, which will use the built in Surreal method
 ```
-
-## DISCLAIMER!
-
-This package is still very much a work in progress.
-
-Also, this is my first time using Deno rather than Node, so I would greatly appreciate any help with standard practices, setup and so on.
 
 ## Docs
 
