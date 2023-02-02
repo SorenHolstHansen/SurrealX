@@ -1,5 +1,4 @@
 import Surreal from 'surrealdb';
-import { withDB } from '../utils/withDB.ts';
 
 export async function runMigrations(db: Surreal): Promise<void> {
 	for await (const dirEntry of Deno.readDir('./migrations')) {

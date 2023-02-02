@@ -1,6 +1,6 @@
 import * as surrealX from '../mod.ts';
-
 import yargs from 'https://cdn.deno.land/yargs/versions/yargs-v16.2.1-deno/raw/deno.ts';
+import { withDB } from './withDB.ts';
 
 type Arguments = {
 	url: string;
@@ -32,9 +32,7 @@ yargs(Deno.args)
 					'Run all pending migrations',
 					{},
 					async (argv: Arguments) => {
-						const db = await initDb(argv);
-						await surrealX.runMigrations(db);
-						db.close();
+						await withDB(argv, async (db) => await surrealX.runMigrations(db));
 					}
 				)
 				.command(
@@ -42,7 +40,6 @@ yargs(Deno.args)
 					'Create a new migration with the given description, and the current time as the version',
 					{},
 					(argv: MigrateAddArguments) => {
-						console.log({ argv });
 						surrealX.addMigration(argv.description);
 					}
 				)
@@ -61,9 +58,10 @@ yargs(Deno.args)
 		},
 		async (argv: GenerateArguments) => {
 			console.log('Generating SurrealDB client');
-			const db = await initDb(argv);
-			await surrealX.generate(db, argv.output);
-			db.close();
+			await withDB(
+				argv,
+				async (db) => await surrealX.generate(db, argv.output)
+			);
 		}
 	)
 	.command(
@@ -72,18 +70,12 @@ yargs(Deno.args)
 		(yargs: any) => {
 			yargs
 				.command('reset', 'reset the database', {}, async (argv: Arguments) => {
-					const db = await initDb(argv);
-					await db.query(`REMOVE DATABASE ${argv.db}`);
-					await db.query(`DEFINE DATABASE ${argv.db}`);
-					db.close();
+					await withDB(argv, async (db) => {
+						await db.query(`REMOVE DATABASE ${argv.db}`);
+						await db.query(`DEFINE DATABASE ${argv.db}`);
+					});
 				})
 				.help();
-		},
-		async (argv: GenerateArguments) => {
-			console.log('Generating SurrealDB client');
-			const db = await initDb(argv);
-			await surrealX.generate(db, argv.output);
-			db.close();
 		}
 	)
 	.option('url', {

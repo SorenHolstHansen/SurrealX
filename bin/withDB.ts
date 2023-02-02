@@ -9,18 +9,20 @@ type InitDbParams = {
 	db: string;
 };
 
-export async function withDB(
+export async function withDB<T>(
 	{ url, token, user, pass, ns, db: database }: InitDbParams,
-	callback: (db: Surreal) => Promise<void>
-): Promise<void> {
+	callback: (db: Surreal) => Promise<T>
+): Promise<T> {
 	const db = new Surreal(url, token);
-	await db.signin({
-		user,
-		pass,
-	});
-	await db.use(ns, database);
+	try {
+		await db.signin({
+			user,
+			pass,
+		});
+		await db.use(ns, database);
 
-	await callback(db);
-
-	db.close();
+		return await callback(db);
+	} finally {
+		db.close();
+	}
 }

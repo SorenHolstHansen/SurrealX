@@ -1,5 +1,5 @@
 import { ts, printNode } from 'ts-morph';
-import { capitalize } from '../../utils/capitalize.ts';
+import { capitalize } from '../utils/capitalize.ts';
 import { assertEquals } from 'https://deno.land/std@0.174.0/testing/asserts.ts';
 const { factory } = ts;
 
