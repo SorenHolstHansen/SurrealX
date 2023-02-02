@@ -5,6 +5,6 @@
 		"lodash": "https://deno.land/x/lodash@4.17.0/mod.ts"
 	},
 	"tasks": {
-		"dev": "deno run --watch main.ts"
+		"test": "deno test ."
 	}
 }

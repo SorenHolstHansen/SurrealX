@@ -67,12 +67,13 @@ async function addTablesWithTypes(
 		} else {
 			genFile.addStatements(
 				printNode(
-					addComment(await createTableTypeAlias(db, tableName), [
+					addComment(
+						await createTableTypeAlias(db, tableName),
 						'Definition:',
 						'```sql',
 						tableDefinition,
-						'```',
-					])
+						'```'
+					)
 				)
 			);
 		}

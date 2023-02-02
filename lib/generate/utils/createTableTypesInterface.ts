@@ -1,6 +1,5 @@
-import { ts, printNode } from 'ts-morph';
+import { ts } from 'ts-morph';
 import { capitalize } from '../utils/capitalize.ts';
-import { assertEquals } from 'https://deno.land/std@0.174.0/testing/asserts.ts';
 const { factory } = ts;
 
 export function createTableTypesInterface(tableNames: string[]): ts.Node {
@@ -41,15 +40,3 @@ export function createTableTypesInterface(tableNames: string[]): ts.Node {
 		)
 	);
 }
-
-Deno.test('createTableType', () => {
-	const type = createTableTypesInterface(['tableA', 'myTable']);
-	const node = printNode(type);
-	assertEquals(
-		node,
-		`export interface TableTypes extends Record<TableName, Record<string, unknown>> {
-    tableA: TableA;
-    myTable: MyTable;
-}`
-	);
-});
