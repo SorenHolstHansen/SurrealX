@@ -1,6 +1,28 @@
 export const typeUtilsStatements = `
 /** GENERAL UTIL TYPES */
 
+interface DefaultGrammar {
+	array: '*';
+	prop: '.';
+	omit: '!';
+	mutate: '~';
+	glob: '*';
+}
+interface PathGrammar {
+	array: '*';
+	prop: '.';
+	omit: '';
+	mutate: '';
+	glob: '*';
+}
+interface SlashGrammar {
+	array: '*';
+	prop: '/';
+	omit: '';
+	mutate: '';
+	glob: '';
+}
+
 /**
  * Gets the type of the prop at the path.
  *
@@ -31,18 +53,7 @@ type Prev = [
 	7,
 	8,
 	9,
-	10,
-	11,
-	12,
-	13,
-	14,
-	15,
-	16,
-	17,
-	18,
-	19,
-	20,
-	...0[]
+	10
 ];
 
 type Join<K, P, Sep  extends string = "/"> = K extends string | number
@@ -51,44 +62,12 @@ type Join<K, P, Sep  extends string = "/"> = K extends string | number
 		: never
 	: never;
 
-/**
- * The paths of an object.
- *
- * @example
- * \`\`\`
- * type P = Paths<{id: string, name: {first: string}}> // "/id" | "/name" | "/name/first"
- * \`\`\`
- */
-type Paths<T, Sep  extends string = "/", D extends number = 10> = [D] extends [never]
-	? never
-	: T extends object
-	? {
-			[K in keyof T]-?: K extends string | number
-				? \`\${K}\` | Join<K, Paths<T[K], Sep, Prev[D]>, Sep>
-				: never;
-	  }[keyof T]
-	: '';
-
-/**
- * The leaves of an object.
- *
- * @example
- * \`\`\`
- * type P = Paths<{id: string, name: {first: string}}> // "/id" | "/name/first"
- * \`\`\`
- */
-type Leaves<T, D extends number = 10> = [D] extends [never]
-	? never
-	: T extends object
-	? { [K in keyof T]-?: Join<K, Leaves<T[K], Prev[D]>> }[keyof T]
-	: '';
-
 type PathAndValue<T extends Record<string, unknown>> = {
-	[Path in Paths<T>]: {
+	[Path in DeepPickPath<T, SlashGrammar>]: {
 		path: \`/\${Path}\`;
 		value: PropType<T, Path>; // TODO: Partial or DeepPartial or not
 	};
-}[Paths<T>];
+}[DeepPickPath<T, SlashGrammar>];
 
 /** SURREALX VERSION OF SURREAL PATCH */
 type AddPatchX<T extends Record<string, unknown>> = {
@@ -96,7 +75,7 @@ type AddPatchX<T extends Record<string, unknown>> = {
 } & PathAndValue<T>;
 type RemovePatchX<T extends Record<string, unknown>> = {
 	op: 'remove';
-	path: Paths<T>;
+	path: DeepPickPath<T, SlashGrammar>;
 };
 type ReplacePatchX<T extends Record<string, unknown>> = {
 	op: 'replace';
@@ -135,12 +114,11 @@ export class SurrealX extends Surreal {
 	 */
 	async selectAllX<
 		T extends TableName,
-		Fields extends Paths<WithId<TableTypes[T]>, '.'> &
-			DeepPickPath<WithId<TableTypes[T]>, DefaultGrammar>
+		Fields extends DeepPickPath<WithId<TableTypes[T]>, PathGrammar>
 	>(
 		thing: T,
 		fields?: Fields[]
-	): Promise<DeepPick<WithId<TableTypes[T]>, Fields>[]> {
+	): Promise<DeepPick<WithId<TableTypes[T]>, Fields, DefaultGrammar>[]> {
 		const f = (fields ?? ['*']).join(', ');
 		const result = await super.query(\`SELECT \${f} FROM type::table($tb);\`, { tb: thing });
 		return result[0].result as any;
@@ -153,12 +131,11 @@ export class SurrealX extends Surreal {
 	 */
 	async selectX<
 		T extends TableName,
-		Fields extends Paths<WithId<TableTypes[T]>, '.'> &
-			DeepPickPath<WithId<TableTypes[T]>, DefaultGrammar>
+		Fields extends DeepPickPath<WithId<TableTypes[T]>, PathGrammar>
 	>(
 		thing: \`\${T}:\${string}\`,
 		fields?: Fields[]
-	): Promise<DeepPick<WithId<TableTypes[T]>, Fields> | undefined> {
+	): Promise<DeepPick<WithId<TableTypes[T]>, Fields, DefaultGrammar> | undefined> {
 		const f = (fields ?? ['*']).join(', ');
 		const result = await super.query(\`SELECT \${f} FROM type::table($tb);\`, { tb: thing });
 		return (result[0].result as any[])[0] as any;
