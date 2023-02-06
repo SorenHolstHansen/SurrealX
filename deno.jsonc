@@ -6,6 +6,7 @@
 		"date-fns": "https://deno.land/x/date_fns@2.22.0/mod.ts"
 	},
 	"tasks": {
-		"test": "deno test ."
+		"test": "deno test .",
+		"update:examples": "cd examples/basic && deno run --allow-all ../../bin/mod.ts generate --output gen.ts && cd ../.."
 	}
 }

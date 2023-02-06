@@ -2,21 +2,13 @@
 
 A strongly typed SurrealDB client.
 
-SurrealX is a CLI that generates a strongly typed client for SurrealDB queries
+SurrealX is a CLI and library that generates a strongly typed client for SurrealDB queries
 from your running Surreal database. SurrealX extends the basic Surreal instance
 from the surrealdb package with `X` variants (e.g. `select` becomes `selectX`)
 that is aware of your active tables in your database.
 
 Furthermore it provides a very basic migration setup. The SurrealDB team is
-working on a built-in migration tool, so our migration tool is only prelimenary.
-
-## DISCLAIMER!
-
-This package is still a work in progress, but as you can escape to the Surreal
-package, you can expect it to be at least as production ready as that package.
-
-However the migration tool is very far from production readiness. You should
-probably use something else in a produciton environment, at least for now.
+working on a built-in migration tool, so our migration tool is only prelimenary, and should probably not be used in production.
 
 ## Example
 
@@ -29,7 +21,7 @@ CREATE post SET title = "My first post";
 
 -- Schemafull table
 DEFINE TABLE user SCHEMAFULL;
-DEFINE FIELD age ON TABLE user TYPE int;
+DEFINE FIELD age ON TABLE user TYPE int ASSERT $value != NONE;
 DEFINE FIELD name ON TABLE user TYPE object;
 DEFINE FIELD name.first ON TABLE user TYPE string ASSERT $value != NONE;
 DEFINE FIELD name.last ON TABLE user TYPE string;
@@ -39,17 +31,18 @@ DEFINE FIELD comments.*.id ON TABLE user TYPE string ASSERT $value = /^comment:.
 DEFINE FIELD comments.*.title ON TABLE user TYPE string;
 ```
 
-And then generate the client lib with `surrealx generate --output src/gen.ts`.
-Then you will have a fully typechecked client lib that can do the following
+And then generate the client lib with `surrealx generate --output gen.ts`.
+Then you will have a fully typechecked client lib that can do the following, where the tablenames table records, update statements and so on are type checked.
 
 ```typescript
+// gen.ts
 import { Post, SurrealX, User } from './gen.ts';
 
 /**
  * type Post = Record<string, unknown>;
  *
  * type User = {
- *  age?: number;
+ *  age: number;
  *  comments?: {
  *      id?: string;
  *      title?: string;
@@ -66,21 +59,69 @@ const db = new SurrealX('http://127.0.0.1:8000/rpc');
 await db.signin({ user: 'root', pass: 'root' });
 await db.use('test', 'test');
 
+// selectX and selectAllX
 await db.selectAllX('user'); // type: User[]
 await db.selectAllX('user:123'); // typeError
+await db.selectAllX('user:123', ['name.first', 'age', 'id']); // type: { age: number, name?: { first: string } }[]
 await db.selectX('user:123'); // type: User | undefined
-await db.selectAllX('user:123', ['name.first', 'age', 'id']); // type: { age?: number, name?: { first: string } } | undefined
 await db.selectX('user'); // typeError
 await db.selectX('post:123'); // type: Record<string, unknown>
 
-// similar for createX, changeX, modifyX, modifyAllX, deleteX, updateX
+// createX, with type checked data insert
+await db.createX('user', { age: 20, name: { first: 'Ben' } }); // type: User
+
+// updateX and updateAllX, with type checked data insert
+await db.updateX('user:123', { age: 20, name: { first: 'Ben' } }); // type: User
+await db.updateAllX('user', { age: 20, name: { first: 'Ben' } }); // type: User[]
+
+// changeX and changeAllX, with type checked data insert (there are deep partial)
+await db.changeX('user:123', { name: { first: 'Ben' } }); // type: User
+await db.changeAllX('user', { name: { first: 'Ben' } }); // type: User[]
+
+// deleteX, with type checked table name, like the others
+await db.deleteX('user:123'); // type; void
+
+// modifyX, modifyAllX
+await db.modifyX('user:123', [{ op: 'replace', path: '/age', value: 20 }]);
 
 // You can always remove the `X` from the end of the method, which will use the built in Surreal method
 ```
 
 ## Docs
 
-- How to download
+You can either use surrealX as a CLI or a library. The usage is very similar for both, so these docs show the CLI usage:
+
+You can see how to use the CLI by running
+
+```
+deno run https://deno.land/x/surrealx/bin/mod.ts --help
+```
+
+Which will yield the following
+
+```
+surrealx <cmd> [options]
+
+Commands:
+  surrealx migrate <subcommand>  Group of commands for creating and running migr
+                                 ations
+  surrealx generate              Generate a SurrealDB client from the database
+  surrealx database              Group of commands for interacting with the data
+                                 base
+
+Options:
+      --version           Show version number                          [boolean]
+      --url               The url with which to connect with SurrealDB
+                                 [string] [default: "http://127.0.0.1:8000/rpc"]
+      --token             The token with which to connect with SurrealDB[string]
+  -u, --user                                          [string] [default: "root"]
+  -p, --pass, --password                              [string] [default: "root"]
+      --ns, --namespace                               [string] [default: "test"]
+      --db, --database                                [string] [default: "test"]
+      --help              Show help                                    [boolean]
+```
+
+From there you can either add migrations with `migrate add <description>`, run pending migrations with `migrate run` or generate the surrealX client with `generate --output <output.file>`.
 
 ### Migrations
 

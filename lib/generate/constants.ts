@@ -172,8 +172,24 @@ export class SurrealX extends Surreal {
 	 *
 	 * @param data — The document / record data to insert.
 	 */
+	async updateAllX<T extends TableName>(
+		thing: T,
+		data: TableTypes[T]
+	): Promise<WithId<TableTypes[T]>[]> {
+		return await super.update(thing, data);
+	}
+
+	/**
+	 * Updates all records in a table, or a specific record, in the database.
+	 *
+	 * NOTE: This function replaces the current document / record data with the specified data.
+	 *
+	 * @param thing — The table name or the specific record ID to update.
+	 *
+	 * @param data — The document / record data to insert.
+	 */
 	async updateX<T extends TableName>(
-		thing: T | \`\${T}:\${string}\`,
+		thing: \`\${T}:\${string}\`,
 		data: TableTypes[T]
 	): Promise<WithId<TableTypes[T]>> {
 		return await super.update(thing, data);
