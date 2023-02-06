@@ -9,6 +9,7 @@ import {
 	createTableTypesInterface,
 } from './utils/index.ts';
 import { addComment } from './utils/addComment.ts';
+import { SurrealXMigrationTableName } from '../migrate/run.ts';
 const { factory } = ts;
 
 export async function generate(db: Surreal, output: string) {
@@ -43,14 +44,17 @@ async function addTablesWithTypes(
 		throw new Error('Error');
 	}
 
-	const tableNames = Object.keys(dbInfo.tb);
-	if (tableNames.length === 0) {
+	const tables = Object.entries(dbInfo.tb).filter(
+		([n]) => n !== SurrealXMigrationTableName
+	);
+	const tableNames = tables.map(([name]) => name);
+	if (tables.length === 0) {
 		throw new Error(
 			'Your database is empty. Perhaps you forgot to run migrations'
 		);
 	}
 
-	for (const [tableName, tableDefinition] of Object.entries(dbInfo.tb)) {
+	for (const [tableName, tableDefinition] of tables) {
 		const isSchemafull = tableDefinition.includes('SCHEMAFULL');
 		if (!isSchemafull) {
 			// sample the database for the type if the user wants

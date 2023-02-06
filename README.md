@@ -43,7 +43,7 @@ And then generate the client lib with `surrealx generate --output src/gen.ts`.
 Then you will have a fully typechecked client lib that can do the following
 
 ```typescript
-import { Post, SurrealX, User } from "./gen.ts";
+import { Post, SurrealX, User } from './gen.ts';
 
 /**
  * type Post = Record<string, unknown>;
@@ -62,16 +62,16 @@ import { Post, SurrealX, User } from "./gen.ts";
  */
 
 // SETUP
-const db = new SurrealX("http://127.0.0.1:8000/rpc");
-await db.signin({ user: "root", pass: "root" });
-await db.use("test", "test");
+const db = new SurrealX('http://127.0.0.1:8000/rpc');
+await db.signin({ user: 'root', pass: 'root' });
+await db.use('test', 'test');
 
-await db.selectAllX("user"); // type: User[]
-await db.selectAllX("user:123"); // typeError
-await db.selectX("user:123"); // type: User | undefined
-await db.selectAllX("user:123", ["name.first", "age", "id"]); // type: { age?: number, name?: { first: string } } | undefined
-await db.selectX("user"); // typeError
-await db.selectX("post:123"); // type: Record<string, unknown>
+await db.selectAllX('user'); // type: User[]
+await db.selectAllX('user:123'); // typeError
+await db.selectX('user:123'); // type: User | undefined
+await db.selectAllX('user:123', ['name.first', 'age', 'id']); // type: { age?: number, name?: { first: string } } | undefined
+await db.selectX('user'); // typeError
+await db.selectX('post:123'); // type: Record<string, unknown>
 
 // similar for createX, changeX, modifyX, modifyAllX, deleteX, updateX
 
@@ -81,6 +81,24 @@ await db.selectX("post:123"); // type: Record<string, unknown>
 ## Docs
 
 - How to download
+
+### Migrations
+
+To add a new migration file run
+
+```
+surrealx migrate add <description>
+```
+
+which will create a migration file with the name `<timestamp>_<description>.sql` (e.g. `20230206192324_initial_migration.sql`). You can then write whatever SurrealDB statements you want. However because of the current implementation you HAVE TO END ALL YOUR STATEMENTS WITH SEMICOLONS;
+
+We are working on making the migrations implementation better.
+
+After you have written all your statements, you can run any pending migrations with
+
+```
+surrealx migrate run
+```
 
 ## FAQ
 

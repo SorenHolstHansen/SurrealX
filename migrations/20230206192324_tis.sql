@@ -10,11 +10,19 @@ DEFINE FIELD comments.* ON TABLE user TYPE object ASSERT $value != NONE;
 DEFINE FIELD comments.*.id ON TABLE user TYPE string ASSERT $value = /^comment:.*/;
 DEFINE FIELD comments.*.title ON TABLE user TYPE string;
 
-CREATE user CONTENT { name: { first: "firstName" } };
+CREATE user CONTENT { 
+    name: { 
+        first: "firstName" 
+    } 
+};
 
 SELECT * FROM user;
 
-UPDATE user MERGE { name: {last: "lastName"} };
+UPDATE user MERGE { 
+    name: {
+        last: "lastName"
+    } 
+};
 
 SELECT * FROM user;
 
