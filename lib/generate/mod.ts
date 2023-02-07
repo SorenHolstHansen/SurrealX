@@ -1,5 +1,5 @@
 import { printNode, Project, SourceFile, ts } from 'ts-morph';
-import Surreal from 'surrealdb';
+import Surreal from 'https://deno.land/x/surrealdb@v0.5.0/mod.ts';
 import { SurrealXClassStatements, typeUtilsStatements } from './constants.ts';
 import { infoForDb, infoForTable } from './utils/infoForDb.ts';
 import { capitalize } from './utils/capitalize.ts';
@@ -17,7 +17,7 @@ export async function generate(db: Surreal, output: string) {
 
 	const genFile = project.createSourceFile(
 		output,
-		`import Surreal from 'surrealdb';
+		`import Surreal from 'https://deno.land/x/surrealdb@v0.5.0/mod.ts';
 import { DeepPick, DeepPickPath } from 'npm:ts-deep-pick';`,
 		{ overwrite: true }
 	);

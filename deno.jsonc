@@ -1,12 +1,7 @@
 {
-	"imports": {
-		"surrealdb": "https://deno.land/x/surrealdb@v0.5.0/mod.ts",
-		"ts-morph": "https://deno.land/x/ts_morph@17.0.1/mod.ts",
-		"lodash": "https://deno.land/x/lodash@4.17.0/mod.ts",
-		"date-fns": "https://deno.land/x/date_fns@2.22.0/mod.ts"
-	},
 	"tasks": {
 		"test": "deno test .",
-		"update:examples": "cd examples/basic && deno run --allow-all ../../bin/mod.ts generate --output gen.ts && cd ../.."
+		"update:examples": "cd examples/basic && deno run --allow-all ../../bin/mod.ts generate --output gen.ts && cd ../..",
+		"build:npm": "deno run -A scripts/build_npm.ts"
 	}
 }

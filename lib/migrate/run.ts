@@ -1,4 +1,4 @@
-import Surreal from 'surrealdb';
+import Surreal from 'https://deno.land/x/surrealdb@v0.5.0/mod.ts';
 
 type Migration = {
 	filename: string;

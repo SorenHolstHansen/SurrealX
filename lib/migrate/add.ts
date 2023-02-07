@@ -1,4 +1,4 @@
-import { Project } from 'ts-morph';
+import { Project } from 'https://deno.land/x/ts_morph@17.0.1/mod.ts';
 
 function nowAsString(): string {
 	const now = new Date();
