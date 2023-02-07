@@ -121,7 +121,7 @@ Options:
       --help              Show help                                    [boolean]
 ```
 
-From there you can either add migrations with `migrate add <description>`, run pending migrations with `migrate run` or generate the surrealX client with `generate --output <output.file>`.
+From there you can either add migrations with `migrate add <description>`, run pending migrations with `migrate run` or generate the surrealX client with `generate --output <output.file>`. You can also reset your database with `database reset`.
 
 ### Migrations
 
