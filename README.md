@@ -89,7 +89,7 @@ await db.modifyX('user:123', [{ op: 'replace', path: '/age', value: 20 }]);
 
 ## Docs
 
-You can either use surrealX as a CLI or a library. The usage is very similar for both, so these docs show the CLI usage:
+You can either use surrealX as a CLI or a library (the bin is located in `./bin/mod.ts` and the library is exported from `./mod.ts`). The usage is very similar for both, so these docs show the CLI usage:
 
 You can see how to use the CLI by running
 
@@ -141,12 +141,62 @@ After you have written all your statements, you can run any pending migrations w
 surrealx migrate run
 ```
 
-## FAQ
+## Notes and considerations
 
-- Q: What does the `[REPLACED]` thing mean in the comments.
-- A: Sometimes you might have defined a file like this
-  `DEFINE FIELD comment ON TABLE post TYPE string ASSERT $value = /^comment:.*/;`,
-  or similar. The issue is that this includes the string `*/` which is the same
-  as the closing tag of the ts doc comment. There are currently
-  [no workaround for this](https://github.com/microsoft/tsdoc/issues/166), so
-  hence the `[REPLACED]`.
+#### `[REPLACED]` bits in comments.
+
+To every field in a tables type we add a comment specifying how the field was defined. However, sometimes you might have defined a field like this
+
+```sql
+DEFINE FIELD comment ON TABLE post TYPE string ASSERT $value = /^comment:.*/;
+```
+
+or similar. The issue is that this includes the string `*/` which is the same
+as the closing tag of the ts doc comment. There are currently
+[no workaround for this](https://github.com/microsoft/tsdoc/issues/166), so
+hence the `[REPLACED]`.
+
+#### `null` and `undefined`
+
+SurrealDB distinguishes between their `Null` and `None` type, which are similar to JS's `null` and `undefined`. For instance, if you have the following table
+
+```sql
+DEFINE TABLE user SCHEMAFULL;
+DEFINE FIELD age ON TABLE user TYPE int ASSERT $value != NONE;
+DEFINE FIELD name ON TABLE user TYPE string;
+```
+
+and then query it, you get the following results depending on what fields you query for
+
+```typescript
+/**
+ * Can return things like
+ * [
+ *   { age: 1, name: "a" },
+ *   { age: 2 }
+ * ]
+ */
+await db.selectAllX('user');
+
+/**
+ * Can return things like
+ * [
+ *   { age: 1, name: "a" },
+ *   { age: 2, name: null }
+ * ]
+ */
+await db.selectAllX('user', ['age', 'name']);
+
+/**
+ * And even querying for a non-existing field can return things like
+ * [
+ *   { age: 1, profession: null },
+ *   { age: 2, profession: null }
+ * ]
+ */
+await db.selectAllX('user', ['age', 'professions']);
+```
+
+So depending on what fields you want to query you either get `null` or `undefined`. We could potentially support this in surrealX, but have not gotten around to it yet.
+
+In the mean time we strongly suggest using `user.name == null` for checking if things are `null` or `undefined` rather than `===` (potentially enforced using the [eqeqeq linting rule](https://eslint.org/docs/latest/rules/eqeqeq)).
