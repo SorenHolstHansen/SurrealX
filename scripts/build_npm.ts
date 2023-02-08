@@ -26,7 +26,7 @@ await build({
 	package: {
 		// package.json properties
 		name: 'surrealx',
-		version: Deno.args[0],
+		version: Deno.args[0]?.replace(/^v/, ''),
 		description: 'A strongly typed SurrealDB client.',
 		license: 'ISC',
 		repository: {

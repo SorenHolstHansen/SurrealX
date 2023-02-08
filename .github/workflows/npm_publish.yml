@@ -1,0 +1,47 @@
+name: Publish to NPM
+
+on:
+  push:
+    # Pattern matched against refs/tags
+    tags:
+      - '*' # Push events to every tag not containing /
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: denoland/setup-deno@v1.1.1
+        with:
+          deno-version: v1.x # Run with latest stable Deno.
+
+      # Check if the code is formatted according to Deno's default
+      # formatting conventions.
+      - run: deno fmt --check
+
+      # Scan the code for syntax errors and style issues. If
+      # you want to use a custom linter configuration you can add a configuration file with --config <myconfig>
+      - run: deno lint
+
+      # Run all test files in the repository and collect code coverage. The example
+      # runs with all permissions, but it is recommended to run with the minimal permissions your program needs (for example --allow-read).
+      - run: deno test --allow-all --coverage=cov/
+
+      # This generates a report from the collected coverage in `deno test --coverage`. It is
+      # stored as a .lcov file which integrates well with services such as Codecov, Coveralls and Travis CI.
+      - run: deno coverage --lcov cov/ > cov.lcov
+
+      - name: Get tag version
+        if: startsWith(github.ref, 'refs/tags/')
+        id: get_tag_version
+        run: echo ::set-output name=TAG_VERSION::${GITHUB_REF/refs\/tags\//}
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16.x'
+          registry-url: 'https://registry.npmjs.org'
+      - name: npm build
+        run: deno run -A ./scripts/build_npm.ts ${{steps.get_tag_version.outputs.TAG_VERSION}}
+      - name: npm publish
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: cd npm && npm publish
