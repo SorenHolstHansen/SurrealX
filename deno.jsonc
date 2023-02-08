@@ -1,7 +1,7 @@
 {
-	"tasks": {
-		"test": "deno test .",
-		"update:examples": "cd examples/basic && deno run --allow-all ../../bin/mod.ts generate --output gen.ts && cd ../..",
-		"build:npm": "deno run -A scripts/build_npm.ts"
-	}
+  "tasks": {
+    "test": "deno test .",
+    "update:examples": "cd examples/basic && deno run --allow-all ../../bin/mod.ts generate --output gen.ts && cd ../..",
+    "build:npm": "deno run -A scripts/build_npm.ts"
+  }
 }
