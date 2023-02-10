@@ -64,7 +64,6 @@ await db.use("test", "test");
 // selectX and selectAllX
 await db.selectAllX("user"); // type: User[]
 await db.selectAllX("user:123"); // typeError
-await db.selectAllX("user:123", ["name.first", "age", "id"]); // type: { age: number, name?: { first: string } }[]
 await db.selectX("user:123"); // type: User | undefined
 await db.selectX("user"); // typeError
 await db.selectX("post:123"); // type: Record<string, unknown>
@@ -190,7 +189,7 @@ query for
  *   { age: 2 }
  * ]
  */
-await db.selectAllX("user");
+await db.query("SELECT * FROM user");
 
 /**
  * Can return things like
@@ -199,16 +198,16 @@ await db.selectAllX("user");
  *   { age: 2, name: null }
  * ]
  */
-await db.selectAllX("user", ["age", "name"]);
+await db.query("SELECT age, name FROM user");
 
 /**
  * And even querying for a non-existing field can return things like
  * [
- *   { age: 1, profession: null },
- *   { age: 2, profession: null }
+ *   { age: 1, nonexistent: null },
+ *   { age: 2, nonexistent: null }
  * ]
  */
-await db.selectAllX("user", ["age", "professions"]);
+await db.query("SELECT age, nonexistent FROM user");
 ```
 
 So depending on what fields you want to query you either get `null` or
