@@ -1,11 +1,11 @@
-name: Publish to NPM
+name: Pull request checks
 
 on:
   pull_request:
     branches:
       - main
 jobs:
-  publish:
+  checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

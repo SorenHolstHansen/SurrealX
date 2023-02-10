@@ -1,4 +1,9 @@
-import { printNode, Project, SourceFile, ts } from "ts-morph";
+import {
+  printNode,
+  Project,
+  SourceFile,
+  ts,
+} from "https://deno.land/x/ts_morph@17.0.1/mod.ts";
 import Surreal from "https://deno.land/x/surrealdb@v0.5.0/mod.ts";
 import { SurrealXClassStatements, typeUtilsStatements } from "./constants.ts";
 import { infoForDb, infoForTable } from "./utils/infoForDb.ts";

@@ -7,14 +7,13 @@ assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+**Describe the bug** A clear and concise description of what the bug is.
 
-**To Reproduce**
-Steps to reproduce the behavior:
+**To Reproduce** Steps to reproduce the behavior:
+
 1. With the following migration files '...'
 2. Then the generated file has the following errors '....'
-3. 
+3.
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+**Expected behavior** A clear and concise description of what you expected to
+happen.

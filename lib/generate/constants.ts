@@ -41,27 +41,6 @@ type PropType<T, Path extends string> = string extends Path
 		: unknown
 	: unknown;
 
-type Prev = [
-	never,
-	0,
-	1,
-	2,
-	3,
-	4,
-	5,
-	6,
-	7,
-	8,
-	9,
-	10
-];
-
-type Join<K, P, Sep  extends string = "/"> = K extends string | number
-	? P extends string | number
-		? \`\${K}\${'' extends P ? '' : Sep}\${P}\`
-		: never
-	: never;
-
 type PathAndValue<T extends Record<string, unknown>> = {
 	[Path in DeepPickPath<T, SlashGrammar>]: {
 		path: \`/\${Path}\`;
@@ -112,16 +91,10 @@ export class SurrealX extends Surreal {
 	 *
 	 * @param thing The table name to select.
 	 */
-	async selectAllX<
-		T extends TableName,
-		Fields extends DeepPickPath<WithId<TableTypes[T]>, PathGrammar>
-	>(
-		thing: T,
-		fields?: Fields[]
-	): Promise<DeepPick<WithId<TableTypes[T]>, Fields, DefaultGrammar>[]> {
-		const f = (fields ?? ['*']).join(', ');
-		const result = await super.query(\`SELECT \${f} FROM type::table($tb);\`, { tb: thing });
-		return result[0].result as any;
+	async selectAllX<T extends TableName>(
+		thing: T
+	): Promise<WithId<TableTypes[T]>[]> {
+		return await super.select(thing);
 	}
 
 	/**
@@ -129,16 +102,11 @@ export class SurrealX extends Surreal {
 	 *
 	 * @param thing The record ID to select.
 	 */
-	async selectX<
-		T extends TableName,
-		Fields extends DeepPickPath<WithId<TableTypes[T]>, PathGrammar>
-	>(
-		thing: \`\${T}:\${string}\`,
-		fields?: Fields[]
-	): Promise<DeepPick<WithId<TableTypes[T]>, Fields, DefaultGrammar> | undefined> {
-		const f = (fields ?? ['*']).join(', ');
-		const result = await super.query(\`SELECT \${f} FROM type::table($tb);\`, { tb: thing });
-		return (result[0].result as any[])[0] as any;
+	async selectX<T extends TableName>(
+		thing: \`\${T}:\${string}\`
+	): Promise<WithId<TableTypes[T]> | undefined> {
+		const result = await super.select(thing);
+		return result[0] as any;
 	}
 
 	/**
@@ -176,7 +144,7 @@ export class SurrealX extends Surreal {
 		thing: T,
 		data: TableTypes[T]
 	): Promise<WithId<TableTypes[T]>[]> {
-		return await super.update(thing, data);
+		return (await super.update(thing, data)) as any;
 	}
 
 	/**

@@ -1,5 +1,5 @@
 -- Schemaless table
-CREATE post SET title = "My first post";
+CREATE post SET title = 'My first post';
 
 -- Schemafull table
 DEFINE TABLE user SCHEMAFULL;
@@ -11,3 +11,22 @@ DEFINE FIELD comments ON TABLE user TYPE array;
 DEFINE FIELD comments.* ON TABLE user TYPE object ASSERT $value != NONE;
 DEFINE FIELD comments.*.id ON TABLE user TYPE string ASSERT $value = /^comment:.*/;
 DEFINE FIELD comments.*.title ON TABLE user TYPE string;
+
+CREATE user CONTENT {
+    age: 10,
+    name: {
+        first: 'Leeroy',
+        last: 'Jenkins'
+    },
+    comments: [{
+        id: 'comment:1',
+        title: 'First comment'
+    }]
+};
+
+CREATE user CONTENT {
+    age: 11,
+    name: {
+        first: 'Ben'
+    }
+};

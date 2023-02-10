@@ -15,11 +15,11 @@ export async function runMigrations(db: Surreal): Promise<void> {
     if (runMigrationFileNames.includes(dirEntry.name)) continue;
     console.log(`Running migration: ${dirEntry.name}`);
     const data = await Deno.readTextFile(`./migrations/${dirEntry.name}`);
-    const lines = data
+    let lines = data
       .split("\n")
       .filter((line) => !line.startsWith("--") && line.length !== 0);
 
-    lines.reduce((accumulator, currentValue) => {
+    lines = lines.reduce((accumulator, currentValue) => {
       if (
         accumulator.length === 0 ||
         accumulator[accumulator.length - 1].endsWith(";")
