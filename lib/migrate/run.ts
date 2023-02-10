@@ -1,49 +1,49 @@
-import Surreal from "https://deno.land/x/surrealdb@v0.5.0/mod.ts";
+import Surreal from 'https://deno.land/x/surrealdb@v0.5.0/mod.ts';
 
 type Migration = {
-  filename: string;
-  appliedAt: number; // timestamp
+	filename: string;
+	appliedAt: number; // timestamp
 };
 
-export const SurrealXMigrationTableName = "_surrealx_migrations";
+export const SurrealXMigrationTableName = '_surrealx_migrations';
 
 export async function runMigrations(db: Surreal): Promise<void> {
-  // Find all the migrations that has been run
-  const runMigrations = await db.select<Migration>(SurrealXMigrationTableName);
-  const runMigrationFileNames = runMigrations.map(({ filename }) => filename);
-  for await (const dirEntry of Deno.readDir("./migrations")) {
-    if (runMigrationFileNames.includes(dirEntry.name)) continue;
-    console.log(`Running migration: ${dirEntry.name}`);
-    const data = await Deno.readTextFile(`./migrations/${dirEntry.name}`);
-    const lines = data
-      .split("\n")
-      .filter((line) => !line.startsWith("--") && line.length !== 0);
+	// Find all the migrations that has been run
+	const runMigrations = await db.select<Migration>(SurrealXMigrationTableName);
+	const runMigrationFileNames = runMigrations.map(({ filename }) => filename);
+	for await (const dirEntry of Deno.readDir('./migrations')) {
+		if (runMigrationFileNames.includes(dirEntry.name)) continue;
+		console.log(`Running migration: ${dirEntry.name}`);
+		const data = await Deno.readTextFile(`./migrations/${dirEntry.name}`);
+		let lines = data
+			.split('\n')
+			.filter((line) => !line.startsWith('--') && line.length !== 0);
 
-    lines.reduce((accumulator, currentValue) => {
-      if (
-        accumulator.length === 0 ||
-        accumulator[accumulator.length - 1].endsWith(";")
-      ) {
-        return [...accumulator, currentValue.trim()];
-      }
-      const lastValue = accumulator.pop();
-      return [...accumulator, lastValue + currentValue.trim()];
-    }, [] as string[]);
+		lines = lines.reduce((accumulator, currentValue) => {
+			if (
+				accumulator.length === 0 ||
+				accumulator[accumulator.length - 1].endsWith(';')
+			) {
+				return [...accumulator, currentValue.trim()];
+			}
+			const lastValue = accumulator.pop();
+			return [...accumulator, lastValue + currentValue.trim()];
+		}, [] as string[]);
 
-    try {
-      // TODO: Do this in a transaction
-      await Promise.all(
-        lines.map(async (line) => {
-          await db.query(line);
-        }),
-      );
+		try {
+			// TODO: Do this in a transaction
+			await Promise.all(
+				lines.map(async (line) => {
+					await db.query(line);
+				})
+			);
 
-      await db.create<Migration>(SurrealXMigrationTableName, {
-        filename: dirEntry.name,
-        appliedAt: Date.now(),
-      });
-    } catch (e) {
-      console.log({ e });
-    }
-  }
+			await db.create<Migration>(SurrealXMigrationTableName, {
+				filename: dirEntry.name,
+				appliedAt: Date.now(),
+			});
+		} catch (e) {
+			console.log({ e });
+		}
+	}
 }
