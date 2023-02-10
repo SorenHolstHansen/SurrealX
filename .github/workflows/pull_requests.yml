@@ -1,4 +1,4 @@
-name: Publish to NPM
+name: Pull request checks
 
 on:
   pull_request:
