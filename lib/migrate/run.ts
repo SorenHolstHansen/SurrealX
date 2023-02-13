@@ -20,14 +20,15 @@ export async function runMigrations(db: Surreal): Promise<void> {
       .filter((line) => !line.startsWith("--") && line.length !== 0);
 
     lines = lines.reduce((accumulator, currentValue) => {
+      if (currentValue.trim().startsWith("--")) return accumulator;
       if (
         accumulator.length === 0 ||
         accumulator[accumulator.length - 1].endsWith(";")
       ) {
-        return [...accumulator, currentValue.trim()];
+        return [...accumulator, currentValue];
       }
       const lastValue = accumulator.pop();
-      return [...accumulator, lastValue + currentValue.trim()];
+      return [...accumulator, lastValue + currentValue];
     }, [] as string[]);
 
     try {
@@ -44,6 +45,8 @@ export async function runMigrations(db: Surreal): Promise<void> {
       });
     } catch (e) {
       console.log({ e });
+    } finally {
+      db.close();
     }
   }
 }

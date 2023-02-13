@@ -15,17 +15,19 @@ import {
 } from "./utils/index.ts";
 import { addComment } from "./utils/addComment.ts";
 import { SurrealXMigrationTableName } from "../migrate/run.ts";
+import { isNode } from "https://deno.land/x/which_runtime/mod.ts";
+
 const { factory } = ts;
 
 export async function generate(db: Surreal, output: string) {
   const project = new Project();
 
-  const genFile = project.createSourceFile(
-    output,
-    `import Surreal from 'https://deno.land/x/surrealdb@v0.5.0/mod.ts';
-import { DeepPickPath } from 'npm:ts-deep-pick';`,
-    { overwrite: true },
-  );
+  const imports = isNode
+    ? `import Surreal from 'surrealdb.js';`
+    : `import Surreal from 'https://deno.land/x/surrealdb@v0.5.0/mod.ts';`;
+  const genFile = project.createSourceFile(output, imports, {
+    overwrite: true,
+  });
 
   genFile.addStatements(typeUtilsStatements);
 

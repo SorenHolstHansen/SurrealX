@@ -1,5 +1,5 @@
 -- Schemaless table
-CREATE post SET title = 'My first post';
+DEFINE TABLE post SCHEMALESS;
 
 -- Schemafull table
 DEFINE TABLE user SCHEMAFULL;

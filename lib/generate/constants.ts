@@ -1,36 +1,22 @@
 export const typeUtilsStatements = `
-/** GENERAL UTIL TYPES */
+type Join<K, P> = K extends string | number
+	? P extends string | number
+		? \`\${K}\${'' extends P ? '' : '/'}\${P}\`
+		: never
+	: never;
 
-interface DefaultGrammar {
-	array: '*';
-	prop: '.';
-	omit: '!';
-	mutate: '~';
-	glob: '*';
-}
-interface PathGrammar {
-	array: '*';
-	prop: '.';
-	omit: '';
-	mutate: '';
-	glob: '*';
-}
-interface SlashGrammar {
-	array: '*';
-	prop: '/';
-	omit: '';
-	mutate: '';
-	glob: '';
-}
+type Prev = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-/**
- * Gets the type of the prop at the path.
- *
- * @example
- * \`\`\`
- * type A = PropType<{name: {first: string, last: string}}, "/name/first"> // A = string
- * \`\`\`
- */
+type Paths<T, D extends number = 5> = [D] extends [never]
+	? never
+	: T extends object
+	? {
+			[K in keyof T]-?: K extends string | number
+				? \`\${K}\` | Join<K, Paths<T[K], Prev[D]>>
+				: never;
+	  }[keyof T]
+	: '';
+
 type PropType<T, Path extends string> = string extends Path
 	? unknown
 	: Path extends keyof T
@@ -42,11 +28,11 @@ type PropType<T, Path extends string> = string extends Path
 	: unknown;
 
 type PathAndValue<T extends Record<string, unknown>> = {
-	[Path in DeepPickPath<T, SlashGrammar>]: {
+	[Path in Paths<T>]: {
 		path: \`/\${Path}\`;
 		value: PropType<T, Path>; // TODO: Partial or DeepPartial or not
 	};
-}[DeepPickPath<T, SlashGrammar>];
+}[Paths<T>];
 
 /** SURREALX VERSION OF SURREAL PATCH */
 type AddPatchX<T extends Record<string, unknown>> = {
@@ -54,7 +40,7 @@ type AddPatchX<T extends Record<string, unknown>> = {
 } & PathAndValue<T>;
 type RemovePatchX<T extends Record<string, unknown>> = {
 	op: 'remove';
-	path: DeepPickPath<T, SlashGrammar>;
+	path: Paths<T>;
 };
 type ReplacePatchX<T extends Record<string, unknown>> = {
 	op: 'replace';
@@ -70,7 +56,9 @@ type PatchX<T extends Record<string, unknown>> =
 
 type WithId<T> = T & { id: string };
 
-type DeepPartial<T> = T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
+type DeepPartial<T> = T extends object
+	? { [P in keyof T]?: DeepPartial<T[P]> }
+	: T;
 `;
 
 export const SurrealXClassStatements = `

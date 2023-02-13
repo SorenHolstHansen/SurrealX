@@ -186,6 +186,7 @@
     "https://deno.land/x/ts_morph@17.0.1/mod.ts": "adba9b82f24865d15d2c78ef6074b9a7457011719056c9928c800f130a617c93",
     "https://deno.land/x/ts_morph@17.0.1/ts_morph.d.ts": "a54b0c51b06d84defedf5fdd59c773d803808ae7c9678f7165f7a1a6dfa7f6a3",
     "https://deno.land/x/ts_morph@17.0.1/ts_morph.js": "1bb80284b9e31a4c5c2078cd533fe9b12b4b2d710267055cb655225aa88fb2df",
+    "https://deno.land/x/which_runtime@0.2.0/mod.ts": "3e8f1ddb3a043818264a8035c0132aaf72d94977d45cd23ecfb03b2156f06126",
     "https://deno.land/x/y18n@v5.0.0-deno/build/lib/index.d.ts": "11f40d97041eb271cc1a1c7b296c6e7a068d4843759575e7416f0d14ebf8239c",
     "https://deno.land/x/y18n@v5.0.0-deno/build/lib/index.js": "92c4624714aa508d33c6d21c0b0ffa072369a8b306e5f8c7727662f570bbd026",
     "https://deno.land/x/y18n@v5.0.0-deno/deno.ts": "80997f0709a0b43d29931e2b33946f2bbc32b13fd82f80a5409628455427e28d",

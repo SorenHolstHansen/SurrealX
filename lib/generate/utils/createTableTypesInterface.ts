@@ -4,7 +4,7 @@ const { factory } = ts;
 
 export function createTableTypesInterface(tableNames: string[]): ts.Node {
   return factory.createInterfaceDeclaration(
-    [factory.createToken(ts.SyntaxKind.ExportKeyword)],
+    undefined,
     factory.createIdentifier("TableTypes"),
     undefined,
     [
