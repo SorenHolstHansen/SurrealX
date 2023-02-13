@@ -7,7 +7,7 @@ Deno.test("createTableType", () => {
   const node = printNode(type);
   assertEquals(
     node,
-    `export interface TableTypes extends Record<TableName, Record<string, unknown>> {
+    `interface TableTypes extends Record<TableName, Record<string, unknown>> {
     tableA: TableA;
     myTable: MyTable;
 }`,
