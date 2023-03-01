@@ -11,7 +11,13 @@ export async function runMigrations(db: Surreal): Promise<void> {
   // Find all the migrations that has been run
   const runMigrations = await db.select<Migration>(SurrealXMigrationTableName);
   const runMigrationFileNames = runMigrations.map(({ filename }) => filename);
-  for await (const dirEntry of Deno.readDir("./migrations")) {
+  const migrationFiles = [...Deno.readDirSync("./migrations")].sort((a, b) => {
+    const timestampA = parseInt(a.name.split("_")[0]);
+    const timestampB = parseInt(b.name.split("_")[0]);
+    return timestampA - timestampB;
+  });
+  for (const dirEntry of migrationFiles) {
+    console.log({ name: dirEntry.name });
     if (runMigrationFileNames.includes(dirEntry.name)) continue;
     console.log(`Running migration: ${dirEntry.name}`);
     const data = await Deno.readTextFile(`./migrations/${dirEntry.name}`);
