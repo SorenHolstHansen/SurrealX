@@ -55,7 +55,29 @@ type DeepPartial<T> = T extends object ? { [P in keyof T]?: DeepPartial<T[P]> }
 /**
  * Definition:
  * ```sql
- * DEFINE TABLE post SCHEMALESS PERMISSIONS NONE
+ * DEFINE TABLE article SCHEMAFULL
+ * ```
+ */
+export type Article = {
+  /**
+   * Definition:
+   * ```sql
+   * DEFINE FIELD optional ON article TYPE string
+   * ```
+   */
+  optional?: string;
+  /**
+   * Definition:
+   * ```sql
+   * DEFINE FIELD required ON article TYPE string ASSERT $value != NONE
+   * ```
+   */
+  required: string;
+};
+/**
+ * Definition:
+ * ```sql
+ * DEFINE TABLE post SCHEMALESS
  * ```
  */
 export type Post = Record<string, unknown>;
@@ -121,8 +143,9 @@ export type User = {
 /**
  * Names of tables in the database
  */
-export type TableName = "post" | "user";
+export type TableName = "article" | "post" | "user";
 interface TableTypes extends Record<TableName, Record<string, unknown>> {
+  article: Article;
   post: Post;
   user: User;
 }
