@@ -1,6 +1,10 @@
 -- Schemaless table
 DEFINE TABLE post SCHEMALESS;
 
+DEFINE TABLE article SCHEMAFULL;
+DEFINE FIELD required ON TABLE article TYPE string ASSERT $value != NONE;
+DEFINE FIELD optional ON TABLE article TYPE string;
+
 -- Schemafull table
 DEFINE TABLE user SCHEMAFULL;
 DEFINE FIELD age ON TABLE user TYPE int ASSERT $value != NONE;
