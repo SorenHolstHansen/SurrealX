@@ -7,10 +7,12 @@ const surrealTypeNameToTsTypeIdentifier: Record<
   ts.KeywordTypeSyntaxKind
 > = {
   string: ts.SyntaxKind.StringKeyword,
+  datetime: ts.SyntaxKind.StringKeyword,
+  record: ts.SyntaxKind.StringKeyword,
   int: ts.SyntaxKind.NumberKeyword,
   decimal: ts.SyntaxKind.NumberKeyword,
   float: ts.SyntaxKind.NumberKeyword,
-  boolean: ts.SyntaxKind.BooleanKeyword,
+  bool: ts.SyntaxKind.BooleanKeyword,
 };
 
 type FieldInfo = { name: string; definition: string };
