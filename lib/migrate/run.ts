@@ -16,45 +16,24 @@ export async function runMigrations(db: Surreal): Promise<void> {
     const timestampB = parseInt(b.name.split("_")[0]);
     return timestampA - timestampB;
   });
-  for (const dirEntry of migrationFiles) {
-    if (runMigrationFileNames.includes(dirEntry.name)) continue;
-    console.log(`Running migration: ${dirEntry.name}`);
-    const data = await Deno.readTextFile(`./migrations/${dirEntry.name}`);
-    let lines = data
-      .split("\n")
-      .filter((line) => !line.startsWith("--") && line.length !== 0);
+  try {
+    for (const dirEntry of migrationFiles) {
+      if (runMigrationFileNames.includes(dirEntry.name)) continue;
+      console.log(`Running migration: ${dirEntry.name}`);
+      const data = await Deno.readTextFile(`./migrations/${dirEntry.name}`);
 
-    lines = lines.reduce((accumulator, currentValue) => {
-      if (currentValue.trim().startsWith("--")) return accumulator;
-      if (
-        accumulator.length === 0 ||
-        accumulator[accumulator.length - 1].endsWith(";")
-      ) {
-        return [...accumulator, currentValue];
-      }
-      const lastValue = accumulator.pop();
-      return [...accumulator, lastValue + "\n" + currentValue];
-    }, [] as string[]);
-
-    try {
       // TODO: Do this in a transaction
-      await Promise.all(
-        lines.map(async (line) => {
-          await db.query(line);
-        }),
-      );
+      await db.query(data);
 
       await db.create<Migration>(SurrealXMigrationTableName, {
         filename: dirEntry.name,
         appliedAt: Date.now(),
       });
-    } catch (e) {
-      console.error("There was a problem running the migration file");
-      console.error(e);
-      console.log("Ran lines", lines);
-    } finally {
-      db.close();
-      break;
     }
+  } catch (e) {
+    console.error("There was a problem running the migration file");
+    console.error(e);
+  } finally {
+    db.close();
   }
 }
