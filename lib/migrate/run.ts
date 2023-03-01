@@ -44,9 +44,9 @@ export async function runMigrations(db: Surreal): Promise<void> {
         appliedAt: Date.now(),
       });
     } catch (e) {
-      console.error("There was a problem running the migration file")
-      console.error(e)
-      console.log("Ran lines", lines)
+      console.error("There was a problem running the migration file");
+      console.error(e);
+      console.log("Ran lines", lines);
     } finally {
       db.close();
     }
