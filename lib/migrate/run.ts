@@ -28,7 +28,7 @@ export async function runMigrations(db: Surreal): Promise<void> {
         return [...accumulator, currentValue];
       }
       const lastValue = accumulator.pop();
-      return [...accumulator, lastValue + currentValue];
+      return [...accumulator, lastValue + "\n" + currentValue];
     }, [] as string[]);
 
     try {
@@ -44,7 +44,9 @@ export async function runMigrations(db: Surreal): Promise<void> {
         appliedAt: Date.now(),
       });
     } catch (e) {
-      console.log({ e });
+      console.error("There was a problem running the migration file")
+      console.error(e)
+      console.log("Ran lines", lines)
     } finally {
       db.close();
     }
