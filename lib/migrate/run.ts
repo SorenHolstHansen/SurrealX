@@ -14,10 +14,9 @@ export async function runMigrations(db: Surreal): Promise<void> {
   const migrationFiles = [...Deno.readDirSync("./migrations")].sort((a, b) => {
     const timestampA = parseInt(a.name.split("_")[0]);
     const timestampB = parseInt(b.name.split("_")[0]);
-    return timestampA - timestampB;
-  });
+    return timestampA - timestampB
+  })
   for (const dirEntry of migrationFiles) {
-    console.log({ name: dirEntry.name });
     if (runMigrationFileNames.includes(dirEntry.name)) continue;
     console.log(`Running migration: ${dirEntry.name}`);
     const data = await Deno.readTextFile(`./migrations/${dirEntry.name}`);
@@ -50,9 +49,9 @@ export async function runMigrations(db: Surreal): Promise<void> {
         appliedAt: Date.now(),
       });
     } catch (e) {
-      console.error("There was a problem running the migration file");
-      console.error(e);
-      console.log("Ran lines", lines);
+      console.error("There was a problem running the migration file")
+      console.error(e)
+      console.log("Ran lines", lines)
     } finally {
       db.close();
     }
