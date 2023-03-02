@@ -14,12 +14,13 @@ function surrealTypeNameToTsTypeIdentifier(type: string): ts.TypeNode {
       return factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
     case "bool":
       return factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
-    case "record":
-      let table = type.match(/\((\w+)\)/)?.[1] ?? "unknown";
+    case "record": {
+      const table = type.match(/\((\w+)\)/)?.[1] ?? "unknown";
       return factory.createTypeReferenceNode(
         factory.createIdentifier("Id"),
         [factory.createLiteralTypeNode(factory.createStringLiteral(table))],
       );
+    }
     default:
       return factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword);
   }
