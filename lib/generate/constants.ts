@@ -54,8 +54,8 @@ type PatchX<T extends Record<string, unknown>> =
 	| ReplacePatchX<T>
 	| ChangePatchX<T>;
 
-type Id<N extends string> = \`\${N}:\${string}\`;
-type WithId<T, N extends string> = T & { id: Id<N> };
+export type Id<N extends string> = \`\${N}:\${string}\`;
+export type WithId<T, N extends string> = T & { id: Id<N> };
 
 type DeepPartial<T> = T extends object
 	? { [P in keyof T]?: DeepPartial<T[P]> }
