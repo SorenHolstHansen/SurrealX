@@ -2,20 +2,36 @@ import { ts } from "https://deno.land/x/ts_morph@17.0.1/mod.ts";
 import { addComment } from "./addComment.ts";
 const { factory } = ts;
 
-const surrealTypeNameToTsTypeIdentifier: Record<
-  string,
-  ts.KeywordTypeSyntaxKind
-> = {
-  string: ts.SyntaxKind.StringKeyword,
-  datetime: ts.SyntaxKind.StringKeyword,
-  record: ts.SyntaxKind.StringKeyword,
-  int: ts.SyntaxKind.NumberKeyword,
-  decimal: ts.SyntaxKind.NumberKeyword,
-  float: ts.SyntaxKind.NumberKeyword,
-  bool: ts.SyntaxKind.BooleanKeyword,
-};
+function surrealTypeNameToTsTypeIdentifier(type: string): ts.TypeNode {
+  const baseType = type.split("(")[0];
+  switch (baseType) {
+    case "string":
+    case "datetime":
+      return factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
+    case "int":
+    case "decimal":
+    case "float":
+      return factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
+    case "bool":
+      return factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
+    case "record": {
+      const table = type.match(/\((\w+)\)/)?.[1] ?? "unknown";
+      return factory.createTypeReferenceNode(
+        factory.createIdentifier("Id"),
+        [factory.createLiteralTypeNode(factory.createStringLiteral(table))],
+      );
+    }
+    default:
+      return factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword);
+  }
+}
 
 type FieldInfo = { name: string; definition: string };
+
+function getTypeFromDefinition(definition: string): string {
+  const type = definition.match(/TYPE ([^\s]+)/)?.[1] ?? "string";
+  return type;
+}
 
 /**
  * Creates the type alias for a table given the field info. The parentField should not be used directly
@@ -50,7 +66,7 @@ export function createTableType(
   if (baseFields.length === 1 && baseFields[0].name.endsWith("[*]")) {
     // parent is an array
     const { name, definition } = baseFields[0];
-    const type = definition.match(/TYPE (\w+)/)?.[1] ?? "string";
+    const type = getTypeFromDefinition(definition);
     if (type === "object") {
       return createTableType(
         fieldInfo.filter((f) => f.name.startsWith(`${name}.`)),
@@ -64,15 +80,13 @@ export function createTableType(
         ),
       );
     } else {
-      return factory.createKeywordTypeNode(
-        surrealTypeNameToTsTypeIdentifier[type],
-      );
+      return surrealTypeNameToTsTypeIdentifier(type);
     }
   }
 
   const nodes = baseFields.map(({ name: _name, definition }) => {
     const name = _name.split(".").at(-1)!.replace("[*]", "");
-    const type = definition.match(/TYPE (\w+)/)?.[1] ?? "string";
+    const type = getTypeFromDefinition(definition);
     const isOptional = !/ASSERT \$value != NONE/.test(definition);
     const questionMark = isOptional
       ? factory.createToken(ts.SyntaxKind.QuestionToken)
@@ -117,9 +131,7 @@ export function createTableType(
           undefined,
           factory.createIdentifier(name),
           questionMark,
-          factory.createKeywordTypeNode(
-            surrealTypeNameToTsTypeIdentifier[type],
-          ),
+          surrealTypeNameToTsTypeIdentifier(type),
         ),
         "Definition:",
         "```sql",

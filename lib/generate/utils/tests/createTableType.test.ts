@@ -35,6 +35,32 @@ Deno.test("createTableType: can handle basic types", () => {
   );
 });
 
+Deno.test({
+  name: "createTableType: can handle record links",
+  fn: () => {
+    const type = createTableType([
+      {
+        name: "post",
+        definition:
+          "DEFINE FIELD post ON user TYPE record(post) ASSERT $value != NONE",
+      },
+    ]);
+    const node = printNode(type);
+    assertEquals(
+      node,
+      `{
+    /**
+     * Definition:
+     * \`\`\`sql
+     * DEFINE FIELD post ON user TYPE record(post) ASSERT $value != NONE
+     * \`\`\`
+    */
+    post: Id<"post">;
+}`,
+    );
+  },
+});
+
 Deno.test("createTableType: can handle objects", () => {
   const type = createTableType([
     { name: "name", definition: "DEFINE FIELD name ON user TYPE object" },
