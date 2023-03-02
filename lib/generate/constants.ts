@@ -54,7 +54,8 @@ type PatchX<T extends Record<string, unknown>> =
 	| ReplacePatchX<T>
 	| ChangePatchX<T>;
 
-type WithId<T> = T & { id: string };
+type Id<N extends string> = \`\${N}:\${string}\`;
+type WithId<T, N extends string> = T & { id: Id<N> };
 
 type DeepPartial<T> = T extends object
 	? { [P in keyof T]?: DeepPartial<T[P]> }
@@ -81,7 +82,7 @@ export class SurrealX extends Surreal {
 	 */
 	async selectAllX<T extends TableName>(
 		thing: T
-	): Promise<WithId<TableTypes[T]>[]> {
+	): Promise<WithId<TableTypes[T], T>[]> {
 		return await super.select(thing);
 	}
 
@@ -92,7 +93,7 @@ export class SurrealX extends Surreal {
 	 */
 	async selectX<T extends TableName>(
 		thing: \`\${T}:\${string}\`
-	): Promise<WithId<TableTypes[T]> | undefined> {
+	): Promise<WithId<TableTypes[T], T> | undefined> {
 		const result = await super.select(thing);
 		return result[0] as any;
 	}
@@ -115,8 +116,8 @@ export class SurrealX extends Surreal {
 	async createX<T extends TableName>(
 		thing: T | \`\${T}:\${string}\`,
 		data: TableTypes[T]
-	): Promise<WithId<TableTypes[T]>> {
-		return await super.create(thing, data);
+	): Promise<WithId<TableTypes[T], T>> {
+		return await super.create(thing, data) as any;
 	}
 
 	/**
@@ -131,7 +132,7 @@ export class SurrealX extends Surreal {
 	async updateAllX<T extends TableName>(
 		thing: T,
 		data: TableTypes[T]
-	): Promise<WithId<TableTypes[T]>[]> {
+	): Promise<WithId<TableTypes[T], T>[]> {
 		return (await super.update(thing, data)) as any;
 	}
 
@@ -147,8 +148,8 @@ export class SurrealX extends Surreal {
 	async updateX<T extends TableName>(
 		thing: \`\${T}:\${string}\`,
 		data: TableTypes[T]
-	): Promise<WithId<TableTypes[T]>> {
-		return await super.update(thing, data);
+	): Promise<WithId<TableTypes[T], T>> {
+		return await super.update(thing, data) as any;
 	}
 
 	/**
@@ -163,8 +164,8 @@ export class SurrealX extends Surreal {
 	async changeX<T extends TableName>(
 		thing: T | \`\${T}:\${string}\`,
 		data: DeepPartial<TableTypes[T]>
-	): Promise<WithId<TableTypes[T]>> {
-		return (await super.change(thing, data)) as any;
+	): Promise<WithId<TableTypes[T], T>> {
+		return (await super.change(thing, data as any)) as any;
 	}
 
 	/**
