@@ -37,9 +37,12 @@ export function createTableType(
   } else {
     baseFields = fieldInfo.filter(
       (f) => {
-        const leaveName = f.name.replace(`${parentField}.`, "").replace(parentField, "");
-        return !leaveName.includes(".") && !/\w+\[\*\]$/.test(leaveName)
-      }
+        const leaveName = f.name.replace(`${parentField}.`, "").replace(
+          parentField,
+          "",
+        );
+        return !leaveName.includes(".") && !/\w+\[\*\]$/.test(leaveName);
+      },
     );
   }
 
