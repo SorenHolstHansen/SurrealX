@@ -165,6 +165,42 @@ Deno.test({
 });
 
 Deno.test({
+  name: "createTableType: can handle matrices",
+  fn: () => {
+    const type = createTableType([
+      {
+        name: "matrix",
+        definition:
+          "DEFINE FIELD matrix ON user TYPE array ASSERT $value != NONE",
+      },
+      {
+        name: "matrix[*]",
+        definition:
+          "DEFINE FIELD matrix[*] ON user TYPE array ASSERT $value != NONE",
+      },
+      {
+        name: "matrix[*][*]",
+        definition:
+          "DEFINE FIELD matrix[*][*] ON user TYPE int ASSERT $value != NONE",
+      },
+    ]);
+    const node = printNode(type);
+    assertEquals(
+      node,
+      `{
+    /**
+     * Definition:
+     * \`\`\`sql
+     * DEFINE FIELD matrix ON user TYPE array ASSERT $value != NONE
+     * \`\`\`
+    */
+    matrix: number[][];
+}`,
+    );
+  },
+});
+
+Deno.test({
   name: "createTableType: can handle deeply nested arrays and objects",
   fn: () => {
     const type = createTableType([

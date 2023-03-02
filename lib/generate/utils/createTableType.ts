@@ -41,7 +41,8 @@ export function createTableType(
           parentField,
           "",
         );
-        return !leaveName.includes(".") && !/\w+\[\*\]$/.test(leaveName);
+        return !leaveName.includes(".") && !/\w+\[\*\]$/.test(leaveName) &&
+          !leaveName.startsWith("[*][*]");
       },
     );
   }
