@@ -92,7 +92,7 @@ export class SurrealX extends Surreal {
 	 * @param thing The record ID to select.
 	 */
 	async selectX<T extends TableName>(
-		thing: \`\${T}:\${string}\`
+		thing: Id<T>
 	): Promise<WithId<TableTypes[T], T> | undefined> {
 		const result = await super.select(thing);
 		return result[0] as any;
@@ -114,7 +114,7 @@ export class SurrealX extends Surreal {
 	 * \`\`\`
 	 */
 	async createX<T extends TableName>(
-		thing: T | \`\${T}:\${string}\`,
+		thing: T | Id<T>,
 		data: TableTypes[T]
 	): Promise<WithId<TableTypes[T], T>> {
 		return await super.create(thing, data) as any;
@@ -146,7 +146,7 @@ export class SurrealX extends Surreal {
 	 * @param data — The document / record data to insert.
 	 */
 	async updateX<T extends TableName>(
-		thing: \`\${T}:\${string}\`,
+		thing: Id<T>,
 		data: TableTypes[T]
 	): Promise<WithId<TableTypes[T], T>> {
 		return await super.update(thing, data) as any;
@@ -162,7 +162,7 @@ export class SurrealX extends Surreal {
 	 * @param data The document / record data to insert.
 	 */
 	async changeX<T extends TableName>(
-		thing: T | \`\${T}:\${string}\`,
+		thing: T | Id<T>,
 		data: DeepPartial<TableTypes[T]>
 	): Promise<WithId<TableTypes[T], T>> {
 		return (await super.change(thing, data as any)) as any;
@@ -173,7 +173,16 @@ export class SurrealX extends Surreal {
 	 *
 	 * @param thing The table name or a record ID to select.
 	 */
-	async deleteX<T extends TableName>(thing: T): Promise<void> {
+	async deleteAllX<T extends TableName>(thing: T): Promise<void> {
+		return await super.delete(thing);
+	}
+
+	/**
+	 * Deletes all records in a table, or a specific record, from the database.
+	 *
+	 * @param thing The table name or a record ID to select.
+	 */
+	async deleteX<T extends TableName>(thing: Id<T>): Promise<void> {
 		return await super.delete(thing);
 	}
 
@@ -203,7 +212,7 @@ export class SurrealX extends Surreal {
 	 * @param data — The JSON Patch data with which to modify the records.
 	 */
 	async modifyX<T extends TableName>(
-		thing: \`\${T}:\${string}\`,
+		thing: Id<T>,
 		data?: PatchX<TableTypes[T]>[] | undefined
 	): Promise<PatchX<TableTypes[T]>[]> {
 		return (await super.modify(thing, data as any)) as any;
